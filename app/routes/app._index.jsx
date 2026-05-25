@@ -31,8 +31,9 @@ export const loader = async ({ request }) => {
       videos: videos || [],
     };
   } catch (e) {
-    console.error("Dashboard loader error:", e);
-    return { total: 0, live: 0, totalViews: 0, totalClicks: 0, totalWatchSec: 0, totalOrders: 0, totalRevenue: 0, videos: [] };
+    console.error("Dashboard loader error:", e.message, e.stack);
+    // Return error details so we can see them
+    return { total: -1, live: -1, errorMsg: e.message, totalViews: 0, totalClicks: 0, totalWatchSec: 0, totalOrders: 0, totalRevenue: 0, videos: [] };
   }
 };
 
@@ -130,6 +131,11 @@ export default function Index() {
 
   return (
     <div style={s.page}>
+      {data.errorMsg && (
+        <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "8px", padding: "12px 16px", marginBottom: "20px", color: "#dc2626", fontSize: "13px" }}>
+          ❌ Dashboard error: {data.errorMsg}
+        </div>
+      )}
       <div style={s.header}>
         <h1 style={s.title}>NQ-Shoppable Dashboard</h1>
         <button style={s.manageBtn} onClick={() => navigate("/app/videos")}>
