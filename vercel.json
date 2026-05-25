@@ -1,8 +1,0 @@
-{
-  "version": 2,
-  "buildCommand": "prisma generate && react-router build",
-  "outputDirectory": "build/client",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/server" }
-  ]
-}
