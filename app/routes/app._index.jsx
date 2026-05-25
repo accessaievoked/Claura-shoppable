@@ -26,9 +26,12 @@ export const loader = async ({ request }) => {
     const totalOrders   = videos?.reduce((sum, v) => sum + (v.orders        || 0), 0) || 0;
     const totalRevenue  = videos?.reduce((sum, v) => sum + (v.revenue       || 0), 0) || 0;
 
+    console.log("Dashboard - shop:", shop, "videos found:", videos?.length, "first video:", videos?.[0]?.shop_id);
     return {
       total, live, totalViews, totalClicks, totalWatchSec, totalOrders, totalRevenue,
       videos: videos || [],
+      debugShop: shop,
+      debugCount: videos?.length || 0,
     };
   } catch (e) {
     console.error("Dashboard loader error:", e.message, e.stack);
@@ -131,6 +134,9 @@ export default function Index() {
 
   return (
     <div style={s.page}>
+      <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "8px", padding: "12px 16px", marginBottom: "20px", fontSize: "13px" }}>
+        🔍 Debug: shop="{data.debugShop}" | DB count={data.debugCount}
+      </div>
       {data.errorMsg && (
         <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "8px", padding: "12px 16px", marginBottom: "20px", color: "#dc2626", fontSize: "13px" }}>
           ❌ Dashboard error: {data.errorMsg}
