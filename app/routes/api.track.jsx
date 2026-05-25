@@ -5,7 +5,11 @@ const HEADERS = {
   "Access-Control-Allow-Headers": "*",
 };
 
-import { supabase } from "../supabase.server.js";
+// Dynamic supabase client — avoids Vercel cold-start env var issue
+async function getSupabase() {
+  const { createClient } = await import("@supabase/supabase-js");
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
 
 async function handleTrack(request) {
   if (request.method === "OPTIONS") {
@@ -24,7 +28,8 @@ async function handleTrack(request) {
     }
 
     // Read current video row once
-    const { data: video } = await supabase
+    const db = await getSupabase();
+    const { data: video } = await db
       .from("videos")
       .select("views, buy_now_clicks, watch_seconds, orders, revenue")
       .eq("id", videoId)
@@ -60,7 +65,7 @@ async function handleTrack(request) {
       }
 
       if (Object.keys(updateObj).length > 0) {
-        await supabase
+        await db
           .from("videos")
           .update(updateObj)
           .eq("id", videoId)
@@ -69,7 +74,7 @@ async function handleTrack(request) {
     }
 
     // Always log to video_events for full audit trail
-    await supabase.from("video_events").insert({
+    await db.from("video_events").insert({
       shop_id:    shop,
       video_id:   videoId,
       event_type: event,
