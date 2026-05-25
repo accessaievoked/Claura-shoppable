@@ -26,7 +26,7 @@ export const action = async ({ request }) => {
     const title = formData.get("title") || "Untitled Video";
     const shop = formData.get("shop") || "";
 
-    // ── PRESIGN: return signed URLs for direct browser→R2 upload ──
+    // ── PRESIGN ──
     if (type === "presign") {
       const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
       const ext = formData.get("ext") || "mp4";
@@ -48,13 +48,25 @@ export const action = async ({ request }) => {
       return new Response(JSON.stringify({ videoUrl, thumbUrl, key, thumbKey }), { headers: HEADERS });
     }
 
-    // ── CONFIRM: save record to Supabase after browser uploads to R2 ──
+    // ── CONFIRM ──
     if (type === "confirm") {
-      const { supabase } = await import("../supabase.server.js");
+      const { createClient } = await import("@supabase/supabase-js");
+      
+      // Create fresh supabase client with explicit keys
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        return new Response(JSON.stringify({ 
+          error: `Missing env: url=${!!supabaseUrl} key=${!!supabaseKey}` 
+        }), { headers: HEADERS });
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
       const key = formData.get("key");
       const thumbKey = formData.get("thumb_key");
       const hasThumb = formData.get("has_thumb") === "true";
-
       const r2Url = `${process.env.R2_PUBLIC_URL}/${key}`;
       const thumbnailUrl = hasThumb ? `${process.env.R2_PUBLIC_URL}/${thumbKey}` : null;
 
@@ -63,12 +75,20 @@ export const action = async ({ request }) => {
         status: "draft", views: 0, product_ids: [], show_on: [],
         thumbnail_url: thumbnailUrl,
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Supabase insert error:", error);
+        return new Response(JSON.stringify({ 
+          error: `DB error: ${error.message} (code: ${error.code})` 
+        }), { headers: HEADERS });
+      }
+      
       return new Response(JSON.stringify({ ok: true }), { headers: HEADERS });
     }
 
     return new Response(JSON.stringify({ error: "Unknown type" }), { headers: HEADERS });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { headers: HEADERS });
+    console.error("Upload action error:", e);
+    return new Response(JSON.stringify({ error: e.message, stack: e.stack }), { headers: HEADERS });
   }
 };
