@@ -13,39 +13,46 @@ export const loader = async ({ request }) => {
   }
 
   try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    // Get access token from session storage (Prisma)
+    const { PrismaClient } = await import("@prisma/client");
+    const prisma = new PrismaClient();
+    const session = await prisma.session.findFirst({
+      where: { shop }
+    });
+    await prisma.$disconnect();
 
-    // Get session for this shop from Supabase sessions table
-    const { unauthenticated } = await import("../shopify.server.js");
-    const { storefront } = await unauthenticated.storefront(shop);
+    if (!session?.accessToken) {
+      return new Response(JSON.stringify({ error: "No session for shop" }), { headers: HEADERS });
+    }
 
-    const res = await storefront.graphql(`
-      query getProduct($id: ID!) {
-        product(id: $id) {
-          title
-          handle
-          featuredImage { url }
-          variants(first: 1) {
-            edges {
-              node {
-                price { amount }
-                compareAtPrice { amount }
-              }
+    // Fetch product from Shopify Admin API
+    const gid = `gid://shopify/Product/${id}`;
+    const res = await fetch(`https://${shop}/admin/api/2025-04/graphql.json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": session.accessToken,
+      },
+      body: JSON.stringify({
+        query: `query {
+          product(id: "${gid}") {
+            title handle
+            featuredImage { url }
+            variants(first: 1) {
+              edges { node { price compareAtPrice } }
             }
           }
-        }
-      }
-    `, { variables: { id: `gid://shopify/Product/${id}` } });
+        }`
+      })
+    });
 
     const data = await res.json();
     const p = data.data?.product;
-    if (!p) return new Response(JSON.stringify({ error: "Not found" }), { headers: HEADERS });
+    if (!p) return new Response(JSON.stringify({ error: "Product not found" }), { headers: HEADERS });
 
     const variant = p.variants.edges[0]?.node;
-    const price = Math.round(parseFloat(variant?.price?.amount || 0) * 100);
-    const compareAt = variant?.compareAtPrice?.amount
-      ? Math.round(parseFloat(variant.compareAtPrice.amount) * 100) : null;
+    const price = Math.round(parseFloat(variant?.price || 0) * 100);
+    const compareAt = variant?.compareAtPrice ? Math.round(parseFloat(variant.compareAtPrice) * 100) : null;
 
     return new Response(JSON.stringify({
       title: p.title,
@@ -56,7 +63,7 @@ export const loader = async ({ request }) => {
     }), { headers: HEADERS });
 
   } catch (e) {
-    console.error("api.product error:", e);
+    console.error("api.product error:", e.message);
     return new Response(JSON.stringify({ error: e.message }), { headers: HEADERS });
   }
 };
