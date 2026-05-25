@@ -1,6 +1,7 @@
-import { useLoaderData, Form, useNavigation, useNavigate, useFetcher } from "react-router";
+import { useLoaderData, Form, useNavigation, useNavigate, useFetcher, useRouteError } from "react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { authenticate } from "../shopify.server";
+import { boundary } from "@shopify/shopify-app-react-router/server";
 import { supabase } from "../supabase.server";
 
 /* ── S3 / R2 client ── */
@@ -726,3 +727,11 @@ export default function Videos() {
     </div>
   );
 }
+
+export function ErrorBoundary() {
+  return boundary.error(useRouteError());
+}
+
+export const headers = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};

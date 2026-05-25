@@ -1,5 +1,6 @@
-import { useLoaderData, Form, Link, redirect } from "react-router";
+import { useLoaderData, Form, Link, redirect, useRouteError } from "react-router";
 import { authenticate } from "../shopify.server";
+import { boundary } from "@shopify/shopify-app-react-router/server";
 import { supabase } from "../supabase.server";
 
 export const loader = async ({ request, params }) => {
@@ -122,3 +123,11 @@ export default function EditVideo() {
     </div>
   );
 }
+
+export function ErrorBoundary() {
+  return boundary.error(useRouteError());
+}
+
+export const headers = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};
