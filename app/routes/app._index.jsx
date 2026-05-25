@@ -88,15 +88,15 @@ export default function Index() {
     { label: "Total Videos",   value: fmtNum(data.total),            sub: `${data.live} live` },
     { label: "Total Views",    value: fmtNum(metrics.displayViews),  sub: "Cumulative" },
     { label: "Buy Now Clicks", value: fmtNum(metrics.totalClicks),   sub: "Shop Now tag" },
-    { label: "Total Orders",   value: fmtNum(metrics.orders),        sub: "From videos" },
+    // { label: "Total Orders",   value: fmtNum(metrics.orders),        sub: "From videos" },
     { label: "Watch Time",     value: metrics.watchHours,             sub: "Total watched" },
   ];
 
   const engagement = [
     { label: "Total Engagement",       value: fmtNum((metrics.displayViews || 0) + (metrics.totalClicks || 0)) },
     { label: "Product Clicks",         value: fmtNum(metrics.totalClicks) },
-    { label: "Impression Sales",       value: fmtINR(metrics.revenue) },
-    { label: "Avg Order Value",        value: fmtINR(metrics.avgOrderValue) },
+    // { label: "Impression Sales",       value: fmtINR(metrics.revenue) },
+    // { label: "Avg Order Value",        value: fmtINR(metrics.avgOrderValue) },
     { label: "Video Watched Sessions", value: fmtNum(metrics.displayViews) },
     { label: "Video Conversion Rate",  value: metrics.conversionRate + "%" },
   ];
