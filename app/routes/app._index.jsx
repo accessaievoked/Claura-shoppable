@@ -98,7 +98,7 @@ export default function Index() {
     // { label: "Impression Sales",       value: fmtINR(metrics.revenue) },
     // { label: "Avg Order Value",        value: fmtINR(metrics.avgOrderValue) },
     { label: "Video Watched Sessions", value: fmtNum(metrics.displayViews) },
-    { label: "Video Conversion Rate",  value: metrics.conversionRate + "%" },
+    // { label: "Video Conversion Rate",  value: metrics.conversionRate + "%" },
   ];
 
   const s = {
