@@ -17,19 +17,24 @@ export const loader = async ({ request }) => {
 
   let products = [];
   try {
-    const res = await admin.graphql(`
-      query {
-        products(first: 250, sortKey: TITLE) {
-          edges { node { id title handle featuredImage { url } variants(first:1){ edges { node { price } } } } }
-        }
-      }
-    `);
-    const pData = await res.json();
-    products = pData.data.products.edges.map(e => ({
-      id: e.node.id, title: e.node.title, handle: e.node.handle,
-      image: e.node.featuredImage?.url,
-      price: e.node.variants.edges[0]?.node.price,
-    }));
+    let hasNextPage = true;
+    let cursor = null;
+    while (hasNextPage) {
+      const query = cursor
+        ? `query { products(first: 250, sortKey: TITLE, after: "${cursor}") { pageInfo { hasNextPage endCursor } edges { node { id title handle featuredImage { url } variants(first:1){ edges { node { price } } } } } } }`
+        : `query { products(first: 250, sortKey: TITLE) { pageInfo { hasNextPage endCursor } edges { node { id title handle featuredImage { url } variants(first:1){ edges { node { price } } } } } } }`;
+      const res = await admin.graphql(query);
+      const pData = await res.json();
+      const page = pData.data.products;
+      const batch = page.edges.map(e => ({
+        id: e.node.id, title: e.node.title, handle: e.node.handle,
+        image: e.node.featuredImage?.url,
+        price: e.node.variants.edges[0]?.node.price,
+      }));
+      products = [...products, ...batch];
+      hasNextPage = page.pageInfo.hasNextPage;
+      cursor = page.pageInfo.endCursor;
+    }
   } catch (e) { console.error("Failed to fetch products:", e); }
 
   return { videos: videos || [], products };
