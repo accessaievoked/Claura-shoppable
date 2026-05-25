@@ -18,7 +18,7 @@
   var shop      = "{{ shop.permanent_domain }}";
   var productId = "{{ product.id }}";
   var blockId   = "{{ block.id }}";
-  var API       = "https://queuniverse-shoppable.vercel.app/api/videos";
+  var API       = "https://claura-shoppable.vercel.app/api/videos";
   // Pass product_id so API returns ONLY videos tagged to THIS product
   var apiURL    = API + "?shop=" + shop + "&product_id=gid://shopify/Product/" + productId;
   var isMuted   = true;
@@ -67,7 +67,7 @@
 
       // Track view
       try {
-        fetch("https://queuniverse-shoppable.vercel.app/api/track?video_id=" + video.id + "&shop=" + shop + "&event=view", {
+        fetch("https://claura-shoppable.vercel.app/api/track?video_id=" + video.id + "&shop=" + shop + "&event=view", {
           keepalive: true
         }).catch(function(){});
       } catch(e) {}

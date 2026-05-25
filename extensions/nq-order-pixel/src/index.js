@@ -21,7 +21,7 @@ analytics.subscribe("checkout_completed", (event) => {
 
   // Fire to your tracking API
   fetch(
-    "https://queuniverse-shoppable.vercel.app/api/track" +
+    "https://claura-shoppable.vercel.app/api/track" +
     "?video_id=" + encodeURIComponent(videoId) +
     "&shop="     + encodeURIComponent(shop) +
     "&event=order" +
