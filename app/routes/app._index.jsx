@@ -1,12 +1,12 @@
 import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
-import { createClient } from "@supabase/supabase-js";
 import { useState, useMemo } from "react";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
 
+  const { createClient } = await import("@supabase/supabase-js");
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -14,13 +14,19 @@ export const loader = async ({ request }) => {
 
   try {
     const shopTrimmed = shop.trim().toLowerCase();
+    
+    // Test with no filter first
     const { data: allVideos, error: fetchError } = await supabase
       .from("videos")
       .select("id, shop_id, status, views, buy_now_clicks, watch_seconds, orders, revenue, created_at, product_ids");
     
-    console.log("All videos fetched:", allVideos?.length, "error:", fetchError?.message);
-    console.log("Shop looking for:", JSON.stringify(shopTrimmed));
-    console.log("First video shop_id:", JSON.stringify(allVideos?.[0]?.shop_id?.trim().toLowerCase()));
+    console.log("SUPABASE URL:", process.env.SUPABASE_URL?.substring(0,40));
+    console.log("All videos fetched:", allVideos?.length, "error:", fetchError?.message, fetchError?.code);
+    console.log("Shop:", JSON.stringify(shopTrimmed));
+    
+    if (fetchError) {
+      return { total: 0, live: 0, totalViews: 0, totalClicks: 0, totalWatchSec: 0, totalOrders: 0, totalRevenue: 0, videos: [], errorMsg: `Supabase: ${fetchError.message} (${fetchError.code})`, debugShop: shop, debugCount: 0 };
+    }
     
     const videos = allVideos?.filter(v => v.shop_id?.trim().toLowerCase() === shopTrimmed) || [];
 
