@@ -16,21 +16,17 @@ const HEADERS = {
 };
 
 export const action = async ({ request }) => {
-  const { authenticate } = await import("../shopify.server.js");
-  const { supabase } = await import("../supabase.server.js");
-
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: HEADERS });
   }
 
   try {
-    const { session } = await authenticate.admin(request);
-    const shop = session.shop;
     const formData = await request.formData();
     const type = formData.get("type");
     const title = formData.get("title") || "Untitled Video";
+    const shop = formData.get("shop") || "";
 
-    // ── PRESIGN ──
+    // ── PRESIGN: return signed URLs for direct browser→R2 upload ──
     if (type === "presign") {
       const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
       const ext = formData.get("ext") || "mp4";
@@ -52,8 +48,9 @@ export const action = async ({ request }) => {
       return new Response(JSON.stringify({ videoUrl, thumbUrl, key, thumbKey }), { headers: HEADERS });
     }
 
-    // ── CONFIRM ──
+    // ── CONFIRM: save record to Supabase after browser uploads to R2 ──
     if (type === "confirm") {
+      const { supabase } = await import("../supabase.server.js");
       const key = formData.get("key");
       const thumbKey = formData.get("thumb_key");
       const hasThumb = formData.get("has_thumb") === "true";

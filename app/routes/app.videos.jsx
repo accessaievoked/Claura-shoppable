@@ -215,6 +215,7 @@ export default function Videos() {
       confirmForm.set("thumb_key", thumbKey);
       confirmForm.set("has_thumb", hasThumb ? "true" : "false");
       confirmForm.set("title", titleVal);
+      confirmForm.set("shop", new URLSearchParams(window.location.search).get("shop") || "");
       const confirmRes = await fetch("/api/upload", { method: "POST", body: confirmForm });
       const { ok, error: confirmErr } = await confirmRes.json();
       if (confirmErr) throw new Error(confirmErr);
@@ -283,6 +284,7 @@ export default function Videos() {
       confirmForm.set("thumb_key", thumbKey);
       confirmForm.set("has_thumb", hasThumb ? "true" : "false");
       confirmForm.set("title", titleVal);
+      confirmForm.set("shop", new URLSearchParams(window.location.search).get("shop") || "");
       const confirmRes = await fetch("/api/upload", { method: "POST", body: confirmForm });
       const { error: confirmErr } = await confirmRes.json();
       if (confirmErr) throw new Error(confirmErr);
