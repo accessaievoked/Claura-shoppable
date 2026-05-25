@@ -21,10 +21,22 @@ export const action = async ({ request }) => {
   }
 
   try {
+    // Use authenticate.admin to get the real shop from session
+    const { authenticate } = await import("../shopify.server.js");
+    let shop = "";
+    try {
+      const { session } = await authenticate.admin(request);
+      shop = session.shop;
+    } catch(e) {
+      // fallback: read from form data
+    }
+
     const formData = await request.formData();
     const type = formData.get("type");
     const title = formData.get("title") || "Untitled Video";
-    const shop = formData.get("shop") || "";
+    
+    // Use shop from session, fallback to form data
+    if (!shop) shop = formData.get("shop") || "";
 
     // ── PRESIGN ──
     if (type === "presign") {
@@ -45,50 +57,43 @@ export const action = async ({ request }) => {
         { expiresIn: 3600 }
       );
 
-      return new Response(JSON.stringify({ videoUrl, thumbUrl, key, thumbKey }), { headers: HEADERS });
+      // Return shop in presign response so confirm step can use it
+      return new Response(JSON.stringify({ videoUrl, thumbUrl, key, thumbKey, shop }), { headers: HEADERS });
     }
 
     // ── CONFIRM ──
     if (type === "confirm") {
       const { createClient } = await import("@supabase/supabase-js");
-      
-      // Create fresh supabase client with explicit keys
-      const supabaseUrl = process.env.SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      
-      if (!supabaseUrl || !supabaseKey) {
-        return new Response(JSON.stringify({ 
-          error: `Missing env: url=${!!supabaseUrl} key=${!!supabaseKey}` 
-        }), { headers: HEADERS });
-      }
+      const supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
 
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
       const key = formData.get("key");
       const thumbKey = formData.get("thumb_key");
       const hasThumb = formData.get("has_thumb") === "true";
       const r2Url = `${process.env.R2_PUBLIC_URL}/${key}`;
       const thumbnailUrl = hasThumb ? `${process.env.R2_PUBLIC_URL}/${thumbKey}` : null;
 
+      console.log("Confirm upload - shop:", shop, "key:", key);
+
       const { error } = await supabase.from("videos").insert({
         shop_id: shop, title, r2_url: r2Url, r2_key: key,
         status: "draft", views: 0, product_ids: [], show_on: [],
         thumbnail_url: thumbnailUrl,
       });
-      
+
       if (error) {
-        console.error("Supabase insert error:", error);
-        return new Response(JSON.stringify({ 
-          error: `DB error: ${error.message} (code: ${error.code})` 
-        }), { headers: HEADERS });
+        console.error("Supabase error:", error);
+        return new Response(JSON.stringify({ error: `${error.message} (code:${error.code})` }), { headers: HEADERS });
       }
-      
-      return new Response(JSON.stringify({ ok: true }), { headers: HEADERS });
+
+      return new Response(JSON.stringify({ ok: true, shop }), { headers: HEADERS });
     }
 
     return new Response(JSON.stringify({ error: "Unknown type" }), { headers: HEADERS });
   } catch (e) {
-    console.error("Upload action error:", e);
-    return new Response(JSON.stringify({ error: e.message, stack: e.stack }), { headers: HEADERS });
+    console.error("Upload error:", e);
+    return new Response(JSON.stringify({ error: e.message }), { headers: HEADERS });
   }
 };
