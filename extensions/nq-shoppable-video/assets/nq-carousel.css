@@ -808,8 +808,8 @@
   .nq-tile-img_transparent_text_overlay_3,
   .nq-tile-img_opaque_text_overlay_3,
   .nq-tile-product_below_3 {
-    width: 400px !important;
-    height: 700px !important;
+    width: 350px !important;
+    height: 600px !important;
   }
 
   /* 2-tile: 2 cards across on mobile */
