@@ -146,14 +146,6 @@ export default function Index() {
 
   return (
     <div style={s.page}>
-      <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "8px", padding: "12px 16px", marginBottom: "20px", fontSize: "13px" }}>
-        🔍 Debug: shop="{data.debugShop}" | DB count={data.debugCount}
-      </div>
-      {data.errorMsg && (
-        <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "8px", padding: "12px 16px", marginBottom: "20px", color: "#dc2626", fontSize: "13px" }}>
-          ❌ Dashboard error: {data.errorMsg}
-        </div>
-      )}
       <div style={s.header}>
         <h1 style={s.title}>NQ-Shoppable Dashboard</h1>
         <button style={s.manageBtn} onClick={() => navigate("/app/videos")}>
