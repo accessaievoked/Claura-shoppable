@@ -69,7 +69,7 @@
 <script>
 (function() {
   var shop     = "{{ shop.permanent_domain }}";
-  var API      = "https://queuniverse-shoppable.vercel.app/api/videos";
+  var API      = "https://claura-shoppable.vercel.app/api/videos";
   var blockId  = "{{ block.id }}";
   var tileType = "{{ block.settings.tile_type }}";
   var btnColor = "{{ block.settings.shop_btn_color }}";
@@ -705,7 +705,7 @@
   };
 
   /* ── Analytics ── */
-  var TRACK = "https://queuniverse-shoppable.vercel.app/api/track";
+  var TRACK = "https://claura-shoppable.vercel.app/api/track";
 
   /* trackEvent: same GET pattern as view tracking (which works).
      Returns a Promise so click handler can await it before navigating. */
@@ -956,7 +956,7 @@
   if (window._nqWarmInit) return;
   window._nqWarmInit = true;
 
-  var API  = "https://queuniverse-shoppable.vercel.app/api/videos";
+  var API  = "https://claura-shoppable.vercel.app/api/videos";
   var shop = "{{ shop.permanent_domain }}";
   var url  = API + "?shop=" + shop;
   var KEY  = "nq_v6_" + shop + "_home";
