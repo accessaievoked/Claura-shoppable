@@ -1,19 +1,28 @@
-import { authenticate } from "../shopify.server";
-import { supabase } from "../supabase.server";
-
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
+  const { createClient } = await import("@supabase/supabase-js");
   
-  const { data: videos, error } = await supabase
-    .from("videos")
-    .select("id, shop_id, status")
-    .eq("shop_id", shop);
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  return Response.json({ 
-    sessionShop: shop,
-    videosFound: videos?.length || 0,
-    videos: videos?.slice(0,3),
-    error: error?.message 
+  const result = {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseKey,
+    urlStart: supabaseUrl ? supabaseUrl.substring(0, 30) : "MISSING",
+    keyLength: supabaseKey ? supabaseKey.length : 0,
+  };
+
+  if (supabaseUrl && supabaseKey) {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data, error } = await supabase
+      .from("videos")
+      .select("id, shop_id, status")
+      .limit(5);
+    result.data = data;
+    result.error = error?.message;
+    result.count = data?.length;
+  }
+
+  return new Response(JSON.stringify(result, null, 2), {
+    headers: { "Content-Type": "application/json" }
   });
 };
