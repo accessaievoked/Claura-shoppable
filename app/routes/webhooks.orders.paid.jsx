@@ -1,5 +1,7 @@
 import { authenticate } from "../shopify.server";
-import { supabase } from "../supabase.server";
+import { createClient } from "@supabase/supabase-js";
+const getSupabase = () => createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = getSupabase();
 
 export const action = async ({ request }) => {
   const { shop, payload } = await authenticate.webhook(request);
@@ -59,5 +61,3 @@ export const action = async ({ request }) => {
 
   return new Response(null, { status: 200 });
 };
-
-

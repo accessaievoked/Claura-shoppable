@@ -2,7 +2,9 @@ import { useLoaderData, Form, useNavigation, useNavigate, useFetcher, useRouteEr
 import { useState, useRef, useEffect, useCallback } from "react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { supabase } from "../supabase.server";
+import { createClient } from "@supabase/supabase-js";
+const getSupabase = () => createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = getSupabase();
 
 /* ── S3 / R2 client ── */
 

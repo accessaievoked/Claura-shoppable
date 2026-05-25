@@ -1,4 +1,6 @@
-import { supabase } from "../supabase.server";
+import { createClient } from "@supabase/supabase-js";
+const getSupabase = () => createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = getSupabase();
 
 export const loader = async ({ request }) => {
   if (request.method === "OPTIONS") {
