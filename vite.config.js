@@ -55,6 +55,9 @@ export default defineConfig({
   build: {
     assetsInlineLimit: 0,
   },
+  ssr: {
+    noExternal: ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
+  },
   optimizeDeps: {
     include: ["@shopify/app-bridge-react"],
   },

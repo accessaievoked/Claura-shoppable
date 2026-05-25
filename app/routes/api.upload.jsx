@@ -1,5 +1,4 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
 
 const getS3 = () => new S3Client({
@@ -31,9 +30,9 @@ export const action = async ({ request }) => {
     const type = formData.get("type");
     const title = formData.get("title") || "Untitled Video";
 
-    // ── PRESIGN: browser requests presigned URLs, uploads directly to R2 ──
-    // Used by both file upload AND url import
+    // ── PRESIGN ──
     if (type === "presign") {
+      const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
       const ext = formData.get("ext") || "mp4";
       const contentType = formData.get("content_type") || "video/mp4";
       const key = `videos/${uuidv4()}.${ext}`;
@@ -53,7 +52,7 @@ export const action = async ({ request }) => {
       return new Response(JSON.stringify({ videoUrl, thumbUrl, key, thumbKey }), { headers: HEADERS });
     }
 
-    // ── CONFIRM: after browser uploads to R2, save record to Supabase ──
+    // ── CONFIRM ──
     if (type === "confirm") {
       const key = formData.get("key");
       const thumbKey = formData.get("thumb_key");
