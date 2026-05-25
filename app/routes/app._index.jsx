@@ -1,11 +1,16 @@
 import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
-import { supabase } from "../supabase.server";
+import { createClient } from "@supabase/supabase-js";
 import { useState, useMemo } from "react";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
+
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
 
   try {
     const { data: videos } = await supabase
