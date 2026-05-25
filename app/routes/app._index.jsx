@@ -13,10 +13,16 @@ export const loader = async ({ request }) => {
   );
 
   try {
-    const { data: videos } = await supabase
+    const shopTrimmed = shop.trim().toLowerCase();
+    const { data: allVideos, error: fetchError } = await supabase
       .from("videos")
-      .select("id, status, views, buy_now_clicks, watch_seconds, orders, revenue, created_at, product_ids")
-      .eq("shop_id", shop);
+      .select("id, shop_id, status, views, buy_now_clicks, watch_seconds, orders, revenue, created_at, product_ids");
+    
+    console.log("All videos fetched:", allVideos?.length, "error:", fetchError?.message);
+    console.log("Shop looking for:", JSON.stringify(shopTrimmed));
+    console.log("First video shop_id:", JSON.stringify(allVideos?.[0]?.shop_id?.trim().toLowerCase()));
+    
+    const videos = allVideos?.filter(v => v.shop_id?.trim().toLowerCase() === shopTrimmed) || [];
 
     const total         = videos?.length || 0;
     const live          = videos?.filter(v => v.status === "live").length || 0;
