@@ -567,23 +567,13 @@
     var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
     if (!id || id === "undefined") return Promise.resolve(null);
     if (_productCache[id]) return Promise.resolve(_productCache[id]);
-    // Fetch product directly by ID — works for stores with 250+ products
-    return fetch("/products.json?ids=" + id + "&limit=1")
+    // Fetch via claura API which has admin access to full product catalog
+    return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
       .then(function(r) { return r.json(); })
       .then(function(d) {
-        var p = d.products && d.products[0];
-        if (!p) return null;
-        var pv = p.variants && p.variants[0];
-        if (!pv) return null;
-        var result = {
-          title:            p.title,
-          price:            Math.round(parseFloat(pv.price) * 100),
-          compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
-          handle:           p.handle,
-          image:            p.images && p.images[0] ? p.images[0].src : null
-        };
-        _productCache[id] = result;
-        return result;
+        if (!d || d.error) return null;
+        _productCache[id] = d;
+        return d;
       }).catch(function() { return null; });
   }
 
