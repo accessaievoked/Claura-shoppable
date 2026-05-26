@@ -668,6 +668,7 @@
   overflow: hidden;
   justify-content: center;
   align-items: center;
+  width: 80%;
 }
 
 /* Swipe hint */
@@ -741,8 +742,7 @@
 }
 
 .nq-popup-thumb {
-  width: 56px;
-  height: 56px;
+  height: 80px;
   object-fit: cover;
   border-radius: 8px;
   flex-shrink: 0;
