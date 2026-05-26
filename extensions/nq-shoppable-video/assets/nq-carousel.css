@@ -812,18 +812,11 @@
     height: 500px !important;
   }
 
- 
-
-  .nq-carousel {
-    gap: 8px;
-    padding-right: 12px; /* Add breathing room at end instead */
-  }
-
-  /* 2-tile: both cards fully visible */
+  /* 2-tile: 2 cards across on mobile */
   .nq-tile-img_transparent_text_overlay_2,
   .nq-tile-product_below_2 {
-    width: calc(50vw - 18px) !important;
-    height: calc((50vw - 18px) * 1.72) !important;
+    width: calc(50vw - 14px) !important;
+    height: calc((50vw - 14px) * 1.72) !important;
   }
 
   /* Mobile product info below — same bottom position for all cards */
