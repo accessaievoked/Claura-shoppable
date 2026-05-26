@@ -835,7 +835,7 @@
    MOBILE — Responsive tweaks
    ============================================================ */
 @media (max-width: 768px) {
-  .nq-section { padding-left: 12px !important; padding-right: 12px !important; }
+  .nq-section { padding-left: 0px !important; padding-right: 0px !important; }
 
   .nq-tile-img_transparent_text_overlay_3,
   .nq-tile-img_opaque_text_overlay_3,
@@ -896,4 +896,10 @@
     font-size: 18px;
   }
   .nq-action-btn.nq-liked .nq-action-icon::before { font-size: 18px; }
+
+
+  .nq-heading {
+  margin: 0 0 8px;
+}
+
 }
