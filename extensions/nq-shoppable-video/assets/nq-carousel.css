@@ -835,10 +835,5 @@
   .nq-tile-type-grid_no_border .nq-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  .nq-scroll-btn,
-.nq-scroll-prev,
-.nq-scroll-next {
-  display: none !important;
-}
+
 }
