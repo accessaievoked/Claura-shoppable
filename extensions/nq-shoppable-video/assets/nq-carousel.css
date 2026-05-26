@@ -6,9 +6,10 @@
 .nq-section {
   position: relative;
   box-sizing: border-box;
-  overflow: visible !important;
+  overflow: visible !important; /* NEVER clip — would cut second card */
 }
 
+/* Only clip overflow for 3D navigation */
 .nq-tile-type-3d_navigation {
   overflow: hidden;
 }
@@ -27,7 +28,7 @@
 }
 
 /* ============================================================
-   SKELETON LOADING
+   SKELETON LOADING — shown instantly while API loads
    ============================================================ */
 .nq-skeleton {
   border-radius: 12px;
@@ -45,13 +46,11 @@
   100% { background-position: -200% 0; }
 }
 
-/* ── Carousel wrap ───────────────────────────────────────── */
+/* ── Carousel (horizontal scroll) ───────────────────────── */
 .nq-carousel-wrap {
   position: relative;
-  overflow: visible !important;
 }
 
-/* ── Carousel ────────────────────────────────────────────── */
 .nq-carousel {
   display: flex;
   gap: 12px;
@@ -65,10 +64,10 @@
 }
 .nq-carousel::-webkit-scrollbar { display: none; }
 
-/* ── Scroll arrow buttons ────────────────────────────────── */
+/* ── Scroll arrow buttons ───────────────────────────────── */
 .nq-scroll-btn {
   position: absolute;
-  top: calc(50% - 46px); /* centered on video card, not product info */
+  top: 50%;
   transform: translateY(-50%) scale(0.85);
   z-index: 10;
   background: #fff;
@@ -89,7 +88,6 @@
 .nq-scroll-prev { left: 8px; }
 .nq-scroll-next { right: 8px; }
 
-/* Show on hover — desktop only */
 .nq-carousel-wrap:hover .nq-scroll-btn {
   opacity: 1;
   pointer-events: auto;
@@ -146,7 +144,6 @@
 
 /* ============================================================
    TILE 1 & 2 — Transparent Text Overlay
-   Semi-transparent bar at bottom: product thumb + title
    ============================================================ */
 .nq-tile-img_transparent_text_overlay_3,
 .nq-tile-img_transparent_text_overlay_2 {
@@ -191,7 +188,6 @@
 
 /* ============================================================
    TILE 3 — Opaque Text Overlay
-   White card overlapping bottom of video: thumb + title + price
    ============================================================ */
 .nq-tile-img_opaque_text_overlay_3 {
   border-radius: 14px;
@@ -259,7 +255,6 @@
 
 /* ============================================================
    TILE 5 & 6 — Product Info Below
-   Title + price + strikethrough + discount badge below card
    ============================================================ */
 .nq-tile-product_below_3,
 .nq-tile-product_below_2,
@@ -775,53 +770,34 @@
    MOBILE — Responsive tweaks
    ============================================================ */
 @media (max-width: 768px) {
-
-  /* ── HIDE scroll arrows completely on mobile ── */
-  .nq-scroll-btn,
-  .nq-scroll-prev,
-  .nq-scroll-next {
-    display: none !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
-
-  /* ── Escape parent overflow:hidden using negative margin trick ── */
+  /* ── KEY FIX: remove right padding so cards don't clip ── */
   .nq-section {
     padding-left: 12px !important;
-    padding-right: 12px !important;
-    overflow: visible !important;
+    padding-right: 0 !important;
   }
 
-  .nq-carousel-wrap {
-    margin-left: -12px;
-    margin-right: -12px;
-    overflow: visible !important;
-  }
-
+  /* Add right breathing room inside the carousel instead */
   .nq-carousel {
     gap: 8px;
-    padding-left: 12px;
     padding-right: 12px;
-    overflow-x: auto;
-    overflow-y: visible;
   }
 
-  /* ── 2-tile: BOTH cards fully visible ──
-     100vw - 12px (left) - 8px (gap) - 12px (right) = 100vw - 32px
+  /* ── 3-tile: large single card on mobile ── */
+  .nq-tile-img_transparent_text_overlay_3,
+  .nq-tile-img_opaque_text_overlay_3,
+  .nq-tile-product_below_3 {
+    width: 300px !important;
+    height: 500px !important;
+  }
+
+  /* ── 2-tile: BOTH cards fully visible on mobile ──
+     Math: 100vw - 12px (left pad) - 8px (gap) - 12px (right pad) = available
      Each card = (100vw - 32px) / 2 = 50vw - 16px
   ── */
   .nq-tile-img_transparent_text_overlay_2,
   .nq-tile-product_below_2 {
     width: calc(50vw - 16px) !important;
     height: calc((50vw - 16px) * 1.72) !important;
-  }
-
-  /* ── 3-tile: large single card ── */
-  .nq-tile-img_transparent_text_overlay_3,
-  .nq-tile-img_opaque_text_overlay_3,
-  .nq-tile-product_below_3 {
-    width: 300px !important;
-    height: 500px !important;
   }
 
   /* Mobile product info below */
@@ -840,8 +816,13 @@
     margin-bottom: 90px;
   }
 
-  .nq-below-title { font-size: 11px; }
-  .nq-below-price { font-size: 11px; }
+  .nq-below-title {
+    font-size: 11px;
+  }
+
+  .nq-below-price {
+    font-size: 11px;
+  }
 
   /* Story circles smaller on mobile */
   .nq-tile-story_format {
@@ -854,4 +835,10 @@
   .nq-tile-type-grid_no_border .nq-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .nq-scroll-btn,
+.nq-scroll-prev,
+.nq-scroll-next {
+  display: none !important;
+}
 }
