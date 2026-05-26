@@ -65,10 +65,10 @@
 }
 .nq-carousel::-webkit-scrollbar { display: none; }
 
-/* ── Scroll arrow buttons — DESKTOP ONLY ────────────────── */
+/* ── Scroll arrow buttons ────────────────────────────────── */
 .nq-scroll-btn {
   position: absolute;
-  top: 50%;
+  top: calc(50% - 46px); /* centered on video card, not product info */
   transform: translateY(-50%) scale(0.85);
   z-index: 10;
   background: #fff;
@@ -89,7 +89,7 @@
 .nq-scroll-prev { left: 8px; }
 .nq-scroll-next { right: 8px; }
 
-/* Show on carousel hover — desktop only */
+/* Show on hover — desktop only */
 .nq-carousel-wrap:hover .nq-scroll-btn {
   opacity: 1;
   pointer-events: auto;
@@ -146,6 +146,7 @@
 
 /* ============================================================
    TILE 1 & 2 — Transparent Text Overlay
+   Semi-transparent bar at bottom: product thumb + title
    ============================================================ */
 .nq-tile-img_transparent_text_overlay_3,
 .nq-tile-img_transparent_text_overlay_2 {
@@ -190,6 +191,7 @@
 
 /* ============================================================
    TILE 3 — Opaque Text Overlay
+   White card overlapping bottom of video: thumb + title + price
    ============================================================ */
 .nq-tile-img_opaque_text_overlay_3 {
   border-radius: 14px;
@@ -257,6 +259,7 @@
 
 /* ============================================================
    TILE 5 & 6 — Product Info Below
+   Title + price + strikethrough + discount badge below card
    ============================================================ */
 .nq-tile-product_below_3,
 .nq-tile-product_below_2,
@@ -850,18 +853,5 @@
   .nq-tile-type-grid_theme_border .nq-grid,
   .nq-tile-type-grid_no_border .nq-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ============================================================
-   DESKTOP — Arrow centered vertically on card height only
-   (excludes the product-info below area)
-   ============================================================ */
-@media (min-width: 769px) {
-  .nq-scroll-btn {
-    /* top: 50% already centers on full wrap height.
-       We offset upward by half the product-info area (46px)
-       so arrows align to the video card center, not the full wrap */
-    top: calc(50% - 46px);
   }
 }
