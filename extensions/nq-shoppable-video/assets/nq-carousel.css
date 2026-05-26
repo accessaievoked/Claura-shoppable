@@ -813,7 +813,6 @@
   transform: scale(1.12);
 }
 
-/* Heart fills red when liked */
 .nq-action-btn.nq-liked .nq-action-icon {
   background: rgba(220,30,60,0.75);
   font-size: 0;
@@ -835,8 +834,29 @@
    MOBILE — Responsive tweaks
    ============================================================ */
 @media (max-width: 768px) {
-  .nq-section { padding-left: 0px !important; padding-right: 0px !important; padding-bottom: 55px!important;}
 
+  /* ── KEY FIX: strip ALL section padding on mobile so carousel
+        bleeds edge-to-edge, matching image 2 reference ── */
+  .nq-section {
+    padding: 0 !important;
+    /* keep a top pad for the heading */
+    padding-top: 20px !important;
+    padding-bottom: 55px !important;
+  }
+
+  .nq-heading {
+    margin: 0 0 8px;
+    padding: 0 12px; /* heading stays inset */
+  }
+
+  /* Carousel itself: left-pad so first card starts inset,
+     but NO right padding → next card peeks in naturally */
+  .nq-carousel {
+    padding-left: 12px;
+    /* no padding-right — overflow is visible, next card peeks */
+  }
+
+  /* Card sizes — 3-tile */
   .nq-tile-img_transparent_text_overlay_3,
   .nq-tile-img_opaque_text_overlay_3,
   .nq-tile-product_below_3 {
@@ -844,9 +864,10 @@
     height: calc((33vw - 10px) * 1.72) !important;
   }
 
+  /* Card sizes — 2-tile */
   .nq-tile-img_transparent_text_overlay_2,
   .nq-tile-product_below_2 {
-    width: calc(50vw - 14px) !important;
+    width: calc(46vw - 14px) !important;
     height: calc((50vw - 14px) * 1.72) !important;
   }
 
@@ -896,10 +917,4 @@
     font-size: 18px;
   }
   .nq-action-btn.nq-liked .nq-action-icon::before { font-size: 18px; }
-
-
-  .nq-heading {
-  margin: 0 0 8px;
-}
-
 }
