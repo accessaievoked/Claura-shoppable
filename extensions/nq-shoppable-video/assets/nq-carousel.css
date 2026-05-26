@@ -6,10 +6,9 @@
 .nq-section {
   position: relative;
   box-sizing: border-box;
-  overflow: visible !important; /* NEVER clip — would cut second card */
+  overflow: visible !important;
 }
 
-/* Only clip overflow for 3D navigation */
 .nq-tile-type-3d_navigation {
   overflow: hidden;
 }
@@ -28,7 +27,7 @@
 }
 
 /* ============================================================
-   SKELETON LOADING — shown instantly while API loads
+   SKELETON LOADING
    ============================================================ */
 .nq-skeleton {
   border-radius: 12px;
@@ -46,11 +45,13 @@
   100% { background-position: -200% 0; }
 }
 
-/* ── Carousel (horizontal scroll) ───────────────────────── */
+/* ── Carousel wrap ───────────────────────────────────────── */
 .nq-carousel-wrap {
   position: relative;
+  overflow: visible !important;
 }
 
+/* ── Carousel ────────────────────────────────────────────── */
 .nq-carousel {
   display: flex;
   gap: 12px;
@@ -64,7 +65,7 @@
 }
 .nq-carousel::-webkit-scrollbar { display: none; }
 
-/* ── Scroll arrow buttons ───────────────────────────────── */
+/* ── Scroll arrow buttons — DESKTOP ONLY ────────────────── */
 .nq-scroll-btn {
   position: absolute;
   top: 50%;
@@ -88,6 +89,7 @@
 .nq-scroll-prev { left: 8px; }
 .nq-scroll-next { right: 8px; }
 
+/* Show on carousel hover — desktop only */
 .nq-carousel-wrap:hover .nq-scroll-btn {
   opacity: 1;
   pointer-events: auto;
@@ -770,34 +772,53 @@
    MOBILE — Responsive tweaks
    ============================================================ */
 @media (max-width: 768px) {
-  /* ── KEY FIX: remove right padding so cards don't clip ── */
+
+  /* ── HIDE scroll arrows completely on mobile ── */
+  .nq-scroll-btn,
+  .nq-scroll-prev,
+  .nq-scroll-next {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* ── Escape parent overflow:hidden using negative margin trick ── */
   .nq-section {
     padding-left: 12px !important;
-    padding-right: 0 !important;
+    padding-right: 12px !important;
+    overflow: visible !important;
   }
 
-  /* Add right breathing room inside the carousel instead */
+  .nq-carousel-wrap {
+    margin-left: -12px;
+    margin-right: -12px;
+    overflow: visible !important;
+  }
+
   .nq-carousel {
     gap: 8px;
+    padding-left: 12px;
     padding-right: 12px;
+    overflow-x: auto;
+    overflow-y: visible;
   }
 
-  /* ── 3-tile: large single card on mobile ── */
-  .nq-tile-img_transparent_text_overlay_3,
-  .nq-tile-img_opaque_text_overlay_3,
-  .nq-tile-product_below_3 {
-    width: 300px !important;
-    height: 500px !important;
-  }
-
-  /* ── 2-tile: BOTH cards fully visible on mobile ──
-     Math: 100vw - 12px (left pad) - 8px (gap) - 12px (right pad) = available
+  /* ── 2-tile: BOTH cards fully visible ──
+     100vw - 12px (left) - 8px (gap) - 12px (right) = 100vw - 32px
      Each card = (100vw - 32px) / 2 = 50vw - 16px
   ── */
   .nq-tile-img_transparent_text_overlay_2,
   .nq-tile-product_below_2 {
     width: calc(50vw - 16px) !important;
     height: calc((50vw - 16px) * 1.72) !important;
+  }
+
+  /* ── 3-tile: large single card ── */
+  .nq-tile-img_transparent_text_overlay_3,
+  .nq-tile-img_opaque_text_overlay_3,
+  .nq-tile-product_below_3 {
+    width: 300px !important;
+    height: 500px !important;
   }
 
   /* Mobile product info below */
@@ -816,13 +837,8 @@
     margin-bottom: 90px;
   }
 
-  .nq-below-title {
-    font-size: 11px;
-  }
-
-  .nq-below-price {
-    font-size: 11px;
-  }
+  .nq-below-title { font-size: 11px; }
+  .nq-below-price { font-size: 11px; }
 
   /* Story circles smaller on mobile */
   .nq-tile-story_format {
@@ -834,5 +850,18 @@
   .nq-tile-type-grid_theme_border .nq-grid,
   .nq-tile-type-grid_no_border .nq-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+   DESKTOP — Arrow centered vertically on card height only
+   (excludes the product-info below area)
+   ============================================================ */
+@media (min-width: 769px) {
+  .nq-scroll-btn {
+    /* top: 50% already centers on full wrap height.
+       We offset upward by half the product-info area (46px)
+       so arrows align to the video card center, not the full wrap */
+    top: calc(50% - 46px);
   }
 }
