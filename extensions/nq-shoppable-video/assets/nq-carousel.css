@@ -856,5 +856,11 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .nq-scroll-btn,
+.nq-scroll-prev,
+.nq-scroll-next {
+  display: none !important;
+}
+
   /* Popup prev/next handled by nq-popup-mobile class above */
 }
