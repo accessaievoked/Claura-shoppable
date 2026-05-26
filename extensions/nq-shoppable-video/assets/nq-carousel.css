@@ -6,10 +6,8 @@
 .nq-section {
   position: relative;
   box-sizing: border-box;
-  /* overflow: hidden removed — would clip product info below cards */
 }
 
-/* Only clip overflow for 3D navigation */
 .nq-tile-type-3d_navigation {
   overflow: hidden;
 }
@@ -28,7 +26,7 @@
 }
 
 /* ============================================================
-   SKELETON LOADING — shown instantly while API loads
+   SKELETON LOADING
    ============================================================ */
 .nq-skeleton {
   border-radius: 12px;
@@ -36,11 +34,9 @@
   background: linear-gradient(90deg, #efefef 25%, #e2e2e2 50%, #efefef 75%);
   background-size: 200% 100%;
   animation: nq-shimmer 1.2s ease-in-out infinite;
-  /* Ensure skeleton never blocks the real cards */
   pointer-events: none;
 }
 
-/* Remove the old .nq-loading text style */
 .nq-loading { display: none; }
 
 @keyframes nq-shimmer {
@@ -83,7 +79,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Hidden by default — shown on carousel-wrap hover */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.2s;
@@ -91,7 +86,6 @@
 .nq-scroll-prev { left: 8px; }
 .nq-scroll-next { right: 8px; }
 
-/* Reveal when hovering the carousel area */
 .nq-carousel-wrap:hover .nq-scroll-btn {
   opacity: 1;
   pointer-events: auto;
@@ -103,7 +97,6 @@
   transform: translateY(-50%) scale(1.08) !important;
 }
 
-/* Hide when disabled (at scroll start/end) */
 .nq-scroll-btn:disabled {
   opacity: 0 !important;
   pointer-events: none;
@@ -130,7 +123,6 @@
   border-radius: inherit;
 }
 
-/* Views badge */
 .nq-views {
   position: absolute;
   top: 10px;
@@ -149,7 +141,6 @@
 
 /* ============================================================
    TILE 1 & 2 — Transparent Text Overlay
-   Semi-transparent bar at bottom: product thumb + title
    ============================================================ */
 .nq-tile-img_transparent_text_overlay_3,
 .nq-tile-img_transparent_text_overlay_2 {
@@ -194,11 +185,10 @@
 
 /* ============================================================
    TILE 3 — Opaque Text Overlay
-   White card overlapping bottom of video: thumb + title + price
    ============================================================ */
 .nq-tile-img_opaque_text_overlay_3 {
   border-radius: 14px;
-  overflow: visible !important; /* card extends below video */
+  overflow: visible !important;
 }
 
 .nq-tile-img_opaque_text_overlay_3 .nq-video-el {
@@ -255,7 +245,6 @@
 
 /* ============================================================
    TILE 4 — Single Tile / No Overlay
-   Smaller cards, clean, no product info
    ============================================================ */
 .nq-tile-single_tile_no_overlay {
   border-radius: 10px;
@@ -263,14 +252,13 @@
 
 /* ============================================================
    TILE 5 & 6 — Product Info Below
-   Title + price + strikethrough + discount badge below card
    ============================================================ */
 .nq-tile-product_below_3,
 .nq-tile-product_below_2,
 .nq-tile-product_below {
   border-radius: 12px;
   overflow: visible !important;
-  margin-bottom: 80px; /* space for info below */
+  margin-bottom: 80px;
 }
 
 .nq-tile-product_below_3 .nq-video-el,
@@ -332,7 +320,6 @@
 
 /* ============================================================
    TILE 7 — Story Format
-   Circular cards like Instagram Stories
    ============================================================ */
 .nq-tile-story_format {
   border-radius: 50% !important;
@@ -352,7 +339,6 @@
 
 /* ============================================================
    TILE 8 — Feed View More
-   Horizontal carousel + transparent overlay + VIEW MORE button
    ============================================================ */
 .nq-tile-feed_view_more {
   border-radius: 14px;
@@ -380,7 +366,6 @@
 
 /* ============================================================
    TILE 9 — Feed On Scroll
-   2-column grid, cards fade in as you scroll
    ============================================================ */
 .nq-tile-type-feed_on_scroll .nq-grid {
   display: grid;
@@ -410,7 +395,6 @@
   right: 0;
 }
 
-/* Fade in on scroll */
 .nq-scroll-fade {
   opacity: 0;
   transform: translateY(20px);
@@ -423,7 +407,6 @@
 
 /* ============================================================
    TILE 10 — Grid Theme Border
-   Multi-row grid, rounded corners, coloured border, no product
    ============================================================ */
 .nq-tile-type-grid_theme_border .nq-grid {
   display: grid;
@@ -447,7 +430,6 @@
 
 /* ============================================================
    TILE 11 — Grid No Border
-   Dense multi-row grid, no border-radius, no product
    ============================================================ */
 .nq-tile-type-grid_no_border .nq-grid {
   display: grid;
@@ -470,8 +452,7 @@
 }
 
 /* ============================================================
-   TILE 12 — 3D Navigation / Coverflow
-   Center card large, side cards tilted and smaller
+   TILE 12 — 3D Navigation
    ============================================================ */
 .nq-3d-wrap {
   display: flex;
@@ -487,7 +468,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 420px; /* taller than cards for scale headroom */
+  height: 420px;
   flex: 1;
   perspective: 1000px;
   transform-style: preserve-3d;
@@ -498,7 +479,6 @@
   border-radius: 16px;
   flex-shrink: 0;
   transform-origin: center center;
-  /* JS fills transform/opacity/z-index */
 }
 
 .nq-3d-prev,
@@ -523,14 +503,13 @@
 
 /* ============================================================
    TILE 13 — Minimal
-   Plain horizontal carousel, no product info
    ============================================================ */
 .nq-tile-minimal {
   border-radius: 12px;
 }
 
 /* ============================================================
-   GRID wrapper (shared for tiles 9, 10, 11)
+   GRID wrapper (tiles 9, 10, 11)
    ============================================================ */
 .nq-grid {
   width: 100%;
@@ -538,10 +517,7 @@
 
 /* ============================================================
    POPUP — Fullscreen Video Player
-   Desktop: centered modal with left/right arrows
-   Mobile:  true fullscreen reel (swipe up/down)
    ============================================================ */
-
 .nq-popup {
   display: none;
   position: fixed;
@@ -552,7 +528,6 @@
 }
 .nq-popup.active { display: flex; }
 
-/* Dark blurred backdrop (desktop only) */
 .nq-popup-overlay {
   position: absolute;
   inset: 0;
@@ -561,7 +536,6 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* ── Desktop layout ── */
 .nq-popup-content {
   position: relative;
   z-index: 1;
@@ -570,7 +544,6 @@
   gap: 16px;
 }
 
-/* Desktop video wrap */
 .nq-popup-video-wrap {
   position: relative;
   width: 360px;
@@ -588,7 +561,6 @@
   display: block;
 }
 
-/* Close button */
 .nq-popup-close {
   position: absolute;
   top: 12px;
@@ -610,7 +582,6 @@
 }
 .nq-popup-close:hover { background: rgba(0,0,0,0.7); }
 
-/* Mute toggle */
 .nq-popup-mute {
   position: absolute;
   top: 12px;
@@ -632,7 +603,6 @@
 }
 .nq-popup-mute:hover { background: rgba(0,0,0,0.7); }
 
-/* Desktop prev/next arrows */
 .nq-popup-prev,
 .nq-popup-next {
   background: rgba(255,255,255,0.14);
@@ -657,7 +627,6 @@
   transform: scale(1.08);
 }
 
-/* Product card */
 .nq-popup-product {
   position: absolute;
   bottom: 30px;
@@ -671,7 +640,6 @@
   width: 80%;
 }
 
-/* Swipe hint */
 .nq-swipe-hint {
   position: absolute;
   bottom: 90px;
@@ -692,15 +660,13 @@
 
 /* ── Mobile fullscreen reel ── */
 @media (max-width: 768px) {
-  /* Hide desktop overlay and arrows */
   .nq-popup-mobile .nq-popup-overlay { display: none; }
   .nq-popup-mobile .nq-popup-prev,
   .nq-popup-mobile .nq-popup-next { display: none; }
 
-  /* Make popup fill entire screen like a reel */
   .nq-popup-mobile .nq-popup-content {
     width: 100vw;
-    height: 100dvh; /* dynamic viewport height — accounts for mobile browser chrome */
+    height: 100dvh;
     max-height: 100dvh;
     padding: 0;
     gap: 0;
@@ -719,7 +685,7 @@
     width: 100%;
     height: 100%;
     max-height: 100dvh;
-    object-fit: cover; /* fill screen edge-to-edge like reels */
+    object-fit: cover;
   }
 
   .nq-popup-mobile .nq-popup-product {
@@ -727,7 +693,7 @@
   }
 }
 
-/* Popup product card — matches Whatmore style */
+/* Popup product card */
 .nq-popup-product-card {
   background: #fff;
   backdrop-filter: blur(16px);
@@ -783,7 +749,6 @@
   text-decoration: line-through;
 }
 
-/* SHOP NOW — full-width bar at bottom of popup */
 .nq-popup-shop-btn {
   display: block;
   width: 100%;
@@ -802,12 +767,76 @@
 .nq-popup-shop-btn:hover { opacity: 0.88; }
 
 /* ============================================================
+   LIKE / SHARE ACTION BUTTONS (right rail in popup)
+   ============================================================ */
+.nq-popup-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 220px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.nq-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nq-action-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: background 0.2s, transform 0.15s;
+  line-height: 1;
+}
+
+.nq-action-btn:hover .nq-action-icon,
+.nq-action-btn:active .nq-action-icon {
+  background: rgba(0,0,0,0.7);
+  transform: scale(1.12);
+}
+
+/* Heart fills red when liked */
+.nq-action-btn.nq-liked .nq-action-icon {
+  background: rgba(220,30,60,0.75);
+  font-size: 0;
+}
+.nq-action-btn.nq-liked .nq-action-icon::before {
+  content: "❤️";
+  font-size: 20px;
+}
+
+.nq-action-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  letter-spacing: 0.3px;
+}
+
+/* ============================================================
    MOBILE — Responsive tweaks
    ============================================================ */
 @media (max-width: 768px) {
   .nq-section { padding-left: 12px !important; padding-right: 12px !important; }
 
-  /* 3-tile: 3 cards across on mobile */
   .nq-tile-img_transparent_text_overlay_3,
   .nq-tile-img_opaque_text_overlay_3,
   .nq-tile-product_below_3 {
@@ -815,14 +844,12 @@
     height: calc((33vw - 10px) * 1.72) !important;
   }
 
-  /* 2-tile: 2 cards across on mobile */
   .nq-tile-img_transparent_text_overlay_2,
   .nq-tile-product_below_2 {
     width: calc(50vw - 14px) !important;
     height: calc((50vw - 14px) * 1.72) !important;
   }
 
-  /* Mobile product info below — same bottom position for all cards */
   .nq-tile-product_below_3 .nq-below-info,
   .nq-tile-product_below_2 .nq-below-info,
   .nq-tile-product_below .nq-below-info {
@@ -832,38 +859,41 @@
     padding: 6px 2px 0;
   }
 
-  /* Ensure all product_below cards have same margin-bottom on mobile */
   .nq-tile-product_below_3,
   .nq-tile-product_below_2,
   .nq-tile-product_below {
     margin-bottom: 90px;
   }
 
-  .nq-below-title {
-    font-size: 11px;
-  }
+  .nq-below-title { font-size: 11px; }
+  .nq-below-price { font-size: 11px; }
 
-  .nq-below-price {
-    font-size: 11px;
-  }
-
-  /* Story circles smaller on mobile */
   .nq-tile-story_format {
     width: 82px !important;
     height: 82px !important;
   }
 
-  /* Grid tiles: 2 columns on mobile */
   .nq-tile-type-grid_theme_border .nq-grid,
   .nq-tile-type-grid_no_border .nq-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
   .nq-scroll-btn,
-.nq-scroll-prev,
-.nq-scroll-next {
-  display: none !important;
-}
+  .nq-scroll-prev,
+  .nq-scroll-next {
+    display: none !important;
+  }
 
-  /* Popup prev/next handled by nq-popup-mobile class above */
+  /* Like/Share on mobile */
+  .nq-popup-actions {
+    bottom: 200px;
+    right: 10px;
+    gap: 16px;
+  }
+  .nq-action-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  .nq-action-btn.nq-liked .nq-action-icon::before { font-size: 18px; }
 }
