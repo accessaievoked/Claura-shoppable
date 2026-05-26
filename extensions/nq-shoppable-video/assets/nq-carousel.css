@@ -813,12 +813,19 @@
   }
 
   /* 2-tile: 2 cards across on mobile */
-  .nq-tile-img_transparent_text_overlay_2,
-  .nq-tile-product_below_2 {
-    width: calc(50vw - 14px) !important;
-    height: calc((50vw - 14px) * 1.72) !important;
+    .nq-carousel {
+    gap: 8px;
+    padding-left: 0;
+    padding-right: 0;
   }
 
+  /* 2-tile: both cards fully visible */
+  .nq-tile-img_transparent_text_overlay_2,
+  .nq-tile-product_below_2 {
+    width: calc(50vw - 16px) !important;
+    height: calc((50vw - 16px) * 1.72) !important;
+  }
+  
   /* Mobile product info below — same bottom position for all cards */
   .nq-tile-product_below_3 .nq-below-info,
   .nq-tile-product_below_2 .nq-below-info,
