@@ -835,7 +835,7 @@
    MOBILE — Responsive tweaks
    ============================================================ */
 @media (max-width: 768px) {
-  .nq-section { padding-left: 0px !important; padding-right: 0px !important; }
+  .nq-section { padding-left: 0px !important; padding-right: 0px !important; padding-bottom: 55px!important;}
 
   .nq-tile-img_transparent_text_overlay_3,
   .nq-tile-img_opaque_text_overlay_3,
