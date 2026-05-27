@@ -110,7 +110,7 @@
   })();
 
   var CACHE_KEY = "nq_v6_" + shop + (productId ? "_pdp_" + productId : "_home");
-  var CACHE_TTL = 10 * 60 * 1000;
+  var CACHE_TTL = 60 * 60 * 1000;
 
   function readCache() {
     try {
@@ -529,17 +529,49 @@
   prefetchAllProducts();
 
   function fetchProduct(gidOrId) {
-    var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
-    if (!id || id === "undefined") return Promise.resolve(null);
-    if (_productCache[id]) return Promise.resolve(_productCache[id]);
-    return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (!d || d.error) return null;
-        _productCache[id] = d;
-        return d;
-      }).catch(function() { return null; });
-  }
+  var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
+  if (!id || id === "undefined") return Promise.resolve(null);
+  if (_productCache[id]) return Promise.resolve(_productCache[id]);
+
+  // Try Shopify directly first (always online, no cold starts)
+  return fetch("/products.json?limit=250")
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      (d.products || []).forEach(function(p) {
+        var pid = String(p.id);
+        var pv = p.variants && p.variants[0];
+        if (pv && !_productCache[pid]) {
+          _productCache[pid] = {
+            title: p.title,
+            price: Math.round(parseFloat(pv.price) * 100),
+            compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
+            handle: p.handle,
+            image: p.images && p.images[0] ? p.images[0].src : null
+          };
+        }
+      });
+      if (_productCache[id]) return _productCache[id];
+
+      // Fallback to external API only if not found locally
+      return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d || d.error) return null;
+          _productCache[id] = d;
+          return d;
+        }).catch(function() { return null; });
+    })
+    .catch(function() {
+      // If /products.json fails, try external API
+      return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d || d.error) return null;
+          _productCache[id] = d;
+          return d;
+        }).catch(function() { return null; });
+    });
+}
 
   function getVideoProduct(video) {
     if (video.product_ids && video.product_ids.length) return fetchProduct(video.product_ids[0]);
