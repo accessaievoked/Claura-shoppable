@@ -92,14 +92,14 @@
   var currentIndex = 0;
   var active3D     = 0;
   var isFetching   = false;
-  var likedVideos  = {}; /* track liked state per video id */
+  var likedVideos  = {};
 
   var productId = null;
   {% if product %}
   productId = "{{ product.id }}";
   {% endif %}
 
-  /* ── Cache helpers: 10-min TTL ── */
+  /* ── Cache helpers: 60-min TTL ── */
   (function purgeLegacyCache() {
     try {
       for (var i = localStorage.length - 1; i >= 0; i--) {
@@ -110,7 +110,7 @@
   })();
 
   var CACHE_KEY = "nq_v6_" + shop + (productId ? "_pdp_" + productId : "_home");
-  var CACHE_TTL = 60 * 60 * 1000;
+  var CACHE_TTL = 60 * 60 * 1000; /* 60 minutes */
 
   function readCache() {
     try {
@@ -157,16 +157,18 @@
     document.head.appendChild(link);
   }
 
+  /* ════════════════════════════════════════════════════════════
+     RENDER — prefetch ALL products first, then render all cards
+     at once so video + text appear together with zero lag
+  ════════════════════════════════════════════════════════════ */
   function renderVideos(data) {
     var raw = (data && data.videos) ? data.videos : [];
     allVideos = filterVideos(raw);
 
-    console.log("[NQ] renderVideos:", allVideos.length, "videos");
-
     if (allVideos.length) preloadFirstVideoLink(allVideos[0].r2_url);
 
     var cont = document.getElementById("nq-carousel-" + blockId);
-    if (!cont) { console.warn("[NQ] container not found"); return; }
+    if (!cont) return;
 
     cont.innerHTML = "";
 
@@ -180,16 +182,18 @@
       return;
     }
 
-    allVideos.slice(0, 3).forEach(function(v, i) { cont.appendChild(buildCard(v, i)); });
+    /* Prefetch all products in parallel, then render everything together */
+    var productFetches = allVideos.map(function(v) {
+      return getVideoProduct(v).catch(function() { return null; });
+    });
 
-    if (allVideos.length > 3) {
-      requestAnimationFrame(function() {
-        allVideos.slice(3).forEach(function(v, i) { cont.appendChild(buildCard(v, i + 3)); });
-        finishSetup(cont);
+    Promise.all(productFetches).then(function(products) {
+      cont.innerHTML = "";
+      allVideos.forEach(function(v, i) {
+        cont.appendChild(buildCard(v, i, products[i]));
       });
-    } else {
       finishSetup(cont);
-    }
+    });
   }
 
   function finishSetup(cont) {
@@ -202,9 +206,12 @@
 
   function init() {
     rendered = false;
+
+    /* Prefetch products immediately so they're cached before videos arrive */
+    prefetchAllProducts();
+
     var cached = readCache();
     if (cached && cached.videos && cached.videos.length) {
-      console.log("[NQ] CACHE HIT — instant render");
       renderVideos(cached);
       rendered = true;
     }
@@ -228,7 +235,6 @@
       }, 12000);
     }
 
-    console.log("[NQ] Fetching:", apiURL);
     fetch(apiURL)
       .then(function(r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -238,7 +244,6 @@
         isFetching = false;
         if (giveUpTimer) { clearTimeout(giveUpTimer); giveUpTimer = null; }
         var count = data && data.videos ? data.videos.length : 0;
-        console.log("[NQ] Fetch OK:", count, "videos");
         writeCache(data);
         if (!rendered) {
           renderVideos(data);
@@ -250,7 +255,6 @@
       })
       .catch(function(err) {
         isFetching = false;
-        console.warn("[NQ] Fetch error:", String(err), "retries left:", tries - 1);
         if (tries > 1) {
           setTimeout(function() { isFetching = false; doFetch(tries - 1); }, 3000);
         } else {
@@ -265,7 +269,6 @@
 
   window.addEventListener("pageshow", function(e) {
     if (!e.persisted) return;
-    console.log("[NQ] pageshow persisted — checking carousel");
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
     rendered = false;
@@ -273,12 +276,10 @@
     cont.innerHTML = "";
     var cached = readCache();
     if (cached && cached.videos && cached.videos.length) {
-      console.log("[NQ] pageshow: rendering from cache instantly");
       renderVideos(cached);
       rendered = true;
       doFetch();
     } else {
-      console.log("[NQ] pageshow: no cache, fetching");
       doFetch();
     }
   });
@@ -288,13 +289,11 @@
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
     var cardCount = cont.querySelectorAll(".nq-card").length;
-    console.log("[NQ] visibilitychange — cards found:", cardCount);
     if (cardCount === 0) {
       rendered = false;
       isFetching = false;
       var cached = readCache();
       if (cached && cached.videos && cached.videos.length) {
-        console.log("[NQ] visibilitychange: re-rendering from cache");
         renderVideos(cached);
         rendered = true;
       }
@@ -314,9 +313,10 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     CARD BUILDER
+     CARD BUILDER — accepts pre-fetched product so text renders
+     instantly alongside the video, no async lag
   ════════════════════════════════════════════════════════════ */
-  function buildCard(video, index) {
+  function buildCard(video, index, prefetchedProduct) {
     var card = document.createElement("div");
     card.className = "nq-card nq-tile-" + tileType;
 
@@ -382,23 +382,26 @@
     card.appendChild(videoEl);
     card.appendChild(views);
 
+    /* Use prefetchedProduct directly — no async, no lag */
+    var p = prefetchedProduct || null;
+
     switch (tileType) {
       case "img_transparent_text_overlay_3":
       case "img_transparent_text_overlay_2":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        getVideoProduct(video).then(function(p) {
+        (function(p) {
           if (!p) return;
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
           ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
                          '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        });
+        })(p);
         break;
 
       case "img_opaque_text_overlay_3":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        getVideoProduct(video).then(function(p) {
+        (function(p) {
           if (!p) return;
           var ov = document.createElement("div");
           ov.className = "nq-ov-opaque";
@@ -406,7 +409,7 @@
                          '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span>' +
                          '<span class="nq-ov-price">&#8377;' + fmt(p.price) + '</span></div>';
           card.appendChild(ov);
-        });
+        })(p);
         break;
 
       case "single_tile_no_overlay":
@@ -417,7 +420,7 @@
       case "product_below_2":
       case "product_below":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        getVideoProduct(video).then(function(p) {
+        (function(p) {
           if (!p) return;
           var discHtml = '';
           if (p.compare_at_price && p.compare_at_price > p.price) {
@@ -430,7 +433,7 @@
           info.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
                            '<p class="nq-below-price">&#8377;' + fmt(p.price) + ' ' + discHtml + '</p>';
           card.appendChild(info);
-        });
+        })(p);
         break;
 
       case "story_format":
@@ -440,19 +443,19 @@
 
       case "feed_view_more":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        getVideoProduct(video).then(function(p) {
+        (function(p) {
           if (!p) return;
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
           ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
                          '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        });
+        })(p);
         break;
 
       case "feed_on_scroll":
         card.classList.add("nq-scroll-fade");
-        getVideoProduct(video).then(function(p) {
+        (function(p) {
           if (!p) return;
           var priceRow = '&#8377;' + fmt(p.price);
           if (p.compare_at_price && p.compare_at_price > p.price)
@@ -462,7 +465,7 @@
           info.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
                            '<p class="nq-below-price">' + priceRow + '</p>';
           card.appendChild(info);
-        });
+        })(p);
         break;
 
       case "grid_theme_border":
@@ -475,14 +478,14 @@
 
       case "3d_navigation":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        getVideoProduct(video).then(function(p) {
+        (function(p) {
           if (!p) return;
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
           ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
                          '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        });
+        })(p);
         break;
 
       case "minimal":
@@ -526,43 +529,19 @@
       }).catch(function() { return {}; });
     return _allProductsProm;
   }
-  prefetchAllProducts();
 
+  /* Always use Shopify /products.json first (always online, no cold starts),
+     fall back to external API only if the product isn't found locally */
   function fetchProduct(gidOrId) {
-  var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
-  if (!id || id === "undefined") return Promise.resolve(null);
-  if (_productCache[id]) return Promise.resolve(_productCache[id]);
+    var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
+    if (!id || id === "undefined") return Promise.resolve(null);
+    if (_productCache[id]) return Promise.resolve(_productCache[id]);
 
-  // Try Shopify directly first (always online, no cold starts)
-  return fetch("/products.json?limit=250")
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      (d.products || []).forEach(function(p) {
-        var pid = String(p.id);
-        var pv = p.variants && p.variants[0];
-        if (pv && !_productCache[pid]) {
-          _productCache[pid] = {
-            title: p.title,
-            price: Math.round(parseFloat(pv.price) * 100),
-            compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
-            handle: p.handle,
-            image: p.images && p.images[0] ? p.images[0].src : null
-          };
-        }
-      });
+    /* Wait for prefetch to complete first */
+    return prefetchAllProducts().then(function() {
       if (_productCache[id]) return _productCache[id];
 
-      // Fallback to external API only if not found locally
-      return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (!d || d.error) return null;
-          _productCache[id] = d;
-          return d;
-        }).catch(function() { return null; });
-    })
-    .catch(function() {
-      // If /products.json fails, try external API
+      /* Fallback: external API only if not found in Shopify catalog */
       return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
         .then(function(r) { return r.json(); })
         .then(function(d) {
@@ -571,7 +550,7 @@
           return d;
         }).catch(function() { return null; });
     });
-}
+  }
 
   function getVideoProduct(video) {
     if (video.product_ids && video.product_ids.length) return fetchProduct(video.product_ids[0]);
@@ -656,7 +635,6 @@
     if (btn) btn.classList.toggle("nq-liked", likedVideos[vid]);
     if (label) label.textContent = likedVideos[vid] ? "Liked" : "Like";
 
-    /* persist likes in localStorage */
     try {
       var stored = {};
       try { stored = JSON.parse(localStorage.getItem("nq_likes") || "{}"); } catch(e2) {}
@@ -664,7 +642,6 @@
       localStorage.setItem("nq_likes", JSON.stringify(stored));
     } catch(e) {}
 
-    /* optionally fire a like event to analytics */
     trackEvent("like", video);
   };
 
@@ -679,7 +656,6 @@
         url:    shareUrl
       }).catch(function() {});
     } else {
-      /* Fallback: copy URL to clipboard */
       try {
         navigator.clipboard.writeText(shareUrl).then(function() {
           var btn = document.querySelector("#nq-popup-actions-" + bid + " .nq-action-btn:last-child .nq-action-label");
@@ -702,7 +678,6 @@
   var touchStartX    = 0;
   var swipeHintShown = false;
 
-  /* ── Update like button state when popup opens ── */
   function syncLikeBtn(bid) {
     var video = allVideos[currentIndex];
     if (!video) return;
@@ -716,7 +691,6 @@
   window.nqOpenPopup = function(bid, index) {
     if (bid !== blockId) return;
 
-    /* Load persisted likes */
     try {
       var stored = JSON.parse(localStorage.getItem("nq_likes") || "{}");
       Object.keys(stored).forEach(function(k) { likedVideos[k] = true; });
@@ -906,7 +880,6 @@
     var video = allVideos[currentIndex];
     var vid   = document.getElementById("nq-popup-video-" + bid);
 
-    /* Remove previous ended listener */
     if (vid._nqEndedHandler) {
       vid.removeEventListener("ended", vid._nqEndedHandler);
       vid._nqEndedHandler = null;
@@ -918,9 +891,6 @@
     startWatchTracking(video);
     syncLikeBtn(bid);
 
-    /* ── AUTO-ADVANCE on video end ──
-       Fires on both desktop and mobile.
-       Loops back to first video after the last one. */
     vid._nqEndedHandler = function() {
       currentIndex = (currentIndex + 1) % allVideos.length;
       showPopup(bid);
@@ -937,7 +907,7 @@
   }
 
   function renderPopupProduct(pd, p, video) {
-    if (!p) { console.log("[NQ] fetchProduct returned null"); return; }
+    if (!p) return;
 
     var priceHtml   = '&#8377;' + fmt(p.price);
     var compareHtml = '';
@@ -1009,7 +979,7 @@
   var shop = "{{ shop.permanent_domain }}";
   var url  = API + "?shop=" + shop;
   var KEY  = "nq_v6_" + shop + "_home";
-  var TTL  = 10 * 60 * 1000;
+  var TTL  = 60 * 60 * 1000; /* 60 minutes */
 
   function ping() {
     fetch(url, { keepalive: true })
@@ -1025,7 +995,6 @@
           }
           if (shouldWrite) {
             localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), data: data }));
-            console.log("[NQ Keep-warm] Cache updated:", data.videos.length, "videos");
           }
           try {
             var firstVid = data.videos[0];
