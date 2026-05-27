@@ -1,7 +1,6 @@
 {{ 'nq-carousel.css' | asset_url | stylesheet_tag }}
 <link rel="preconnect" href="https://claura-shoppable.vercel.app" crossorigin>
 <link rel="dns-prefetch" href="https://claura-shoppable.vercel.app">
-<!-- NQ: preconnect to R2/CDN origin so first video loads instantly -->
 <link rel="preconnect" href="https://pub-84129ff3b6e043d1a3890465a9a7ac7e.r2.dev" crossorigin>
 <link rel="dns-prefetch" href="https://pub-84129ff3b6e043d1a3890465a9a7ac7e.r2.dev">
 <div id="nq-first-video-preload-{{ block.id }}"></div>
@@ -18,21 +17,32 @@
 
   {% if tt == 'feed_on_scroll' or tt == 'grid_theme_border' or tt == 'grid_no_border' %}
     <div class="nq-grid" id="nq-carousel-{{ block.id }}">
-      <div class="nq-loading">Loading videos...</div>
+      {%- for i in (1..6) -%}
+        <div class="nq-skeleton nq-skeleton-grid"></div>
+      {%- endfor -%}
     </div>
 
   {% elsif tt == '3d_navigation' %}
     <div class="nq-3d-wrap">
       <button class="nq-3d-prev" id="nq-3d-prev-{{ block.id }}">&#10094;</button>
-      <div class="nq-3d-track" id="nq-carousel-{{ block.id }}"></div>
+      <div class="nq-3d-track" id="nq-carousel-{{ block.id }}">
+        {%- for i in (1..5) -%}
+          <div class="nq-skeleton nq-skeleton-3d" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;"></div>
+        {%- endfor -%}
+      </div>
       <button class="nq-3d-next" id="nq-3d-next-{{ block.id }}">&#10095;</button>
     </div>
 
   {% else %}
     <div class="nq-carousel-wrap">
       <div class="nq-carousel" id="nq-carousel-{{ block.id }}">
-        {%- for i in (1..5) -%}
-          <div class="nq-skeleton" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;flex-shrink:0;"></div>
+        {%- for i in (1..6) -%}
+          <div class="nq-skeleton nq-skeleton-card" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;flex-shrink:0;">
+            <div class="nq-skeleton-text-wrap">
+              <div class="nq-skeleton-line nq-skeleton-line-title"></div>
+              <div class="nq-skeleton-line nq-skeleton-line-price"></div>
+            </div>
+          </div>
         {%- endfor -%}
       </div>
       <button class="nq-scroll-btn nq-scroll-prev" id="nq-prev-{{ block.id }}">&#10094;</button>
@@ -56,8 +66,6 @@
     <div class="nq-popup-video-wrap" id="nq-popup-wrap-{{ block.id }}">
       <button class="nq-popup-close" onclick="nqClosePopup('{{ block.id }}')">&#10005;</button>
       <button class="nq-popup-mute" id="nq-popup-mute-{{ block.id }}" onclick="nqToggleMute('{{ block.id }}')">&#128263;</button>
-
-      <!-- ── Like / Share action buttons (right rail) ── -->
       <div class="nq-popup-actions" id="nq-popup-actions-{{ block.id }}">
         <button class="nq-action-btn" id="nq-like-btn-{{ block.id }}" onclick="nqToggleLike('{{ block.id }}')">
           <span class="nq-action-icon">&#10084;</span>
@@ -68,7 +76,6 @@
           <span class="nq-action-label">Share</span>
         </button>
       </div>
-
       <video class="nq-popup-video" id="nq-popup-video-{{ block.id }}" autoplay muted playsinline></video>
       <div class="nq-popup-product" id="nq-popup-product-{{ block.id }}"></div>
       <div class="nq-swipe-hint" id="nq-swipe-hint-{{ block.id }}">
@@ -99,7 +106,7 @@
   productId = "{{ product.id }}";
   {% endif %}
 
-  /* ── Cache helpers: 60-min TTL ── */
+  /* ── Cache: 60-min TTL ── */
   (function purgeLegacyCache() {
     try {
       for (var i = localStorage.length - 1; i >= 0; i--) {
@@ -110,7 +117,7 @@
   })();
 
   var CACHE_KEY = "nq_v6_" + shop + (productId ? "_pdp_" + productId : "_home");
-  var CACHE_TTL = 60 * 60 * 1000; /* 60 minutes */
+  var CACHE_TTL = 60 * 60 * 1000;
 
   function readCache() {
     try {
@@ -150,17 +157,12 @@
   function preloadFirstVideoLink(url) {
     if (!url || document.querySelector('link[data-nq-preload="1"]')) return;
     var link = document.createElement("link");
-    link.rel          = "preload";
-    link.as           = "video";
-    link.href         = url;
+    link.rel = "preload"; link.as = "video"; link.href = url;
     link.setAttribute("data-nq-preload", "1");
     document.head.appendChild(link);
   }
 
-  /* ════════════════════════════════════════════════════════════
-     RENDER — prefetch ALL products first, then render all cards
-     at once so video + text appear together with zero lag
-  ════════════════════════════════════════════════════════════ */
+  /* ── Render: prefetch ALL products first, render everything at once ── */
   function renderVideos(data) {
     var raw = (data && data.videos) ? data.videos : [];
     allVideos = filterVideos(raw);
@@ -169,8 +171,6 @@
 
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
-
-    cont.innerHTML = "";
 
     if (!allVideos.length) {
       if (productId) {
@@ -182,7 +182,6 @@
       return;
     }
 
-    /* Prefetch all products in parallel, then render everything together */
     var productFetches = allVideos.map(function(v) {
       return getVideoProduct(v).catch(function() { return null; });
     });
@@ -206,10 +205,7 @@
 
   function init() {
     rendered = false;
-
-    /* Prefetch products immediately so they're cached before videos arrive */
     prefetchAllProducts();
-
     var cached = readCache();
     if (cached && cached.videos && cached.videos.length) {
       renderVideos(cached);
@@ -236,28 +232,18 @@
     }
 
     fetch(apiURL)
-      .then(function(r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
+      .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function(data) {
         isFetching = false;
         if (giveUpTimer) { clearTimeout(giveUpTimer); giveUpTimer = null; }
-        var count = data && data.videos ? data.videos.length : 0;
         writeCache(data);
-        if (!rendered) {
-          renderVideos(data);
-          rendered = true;
-        } else {
-          allVideos = filterVideos(data.videos || []);
-          refreshViewCounters();
-        }
+        if (!rendered) { renderVideos(data); rendered = true; }
+        else { allVideos = filterVideos(data.videos || []); refreshViewCounters(); }
       })
       .catch(function(err) {
         isFetching = false;
-        if (tries > 1) {
-          setTimeout(function() { isFetching = false; doFetch(tries - 1); }, 3000);
-        } else {
+        if (tries > 1) { setTimeout(function() { isFetching = false; doFetch(tries - 1); }, 3000); }
+        else {
           if (giveUpTimer) { clearTimeout(giveUpTimer); giveUpTimer = null; }
           if (!rendered) {
             var cont = document.getElementById("nq-carousel-" + blockId);
@@ -271,32 +257,20 @@
     if (!e.persisted) return;
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
-    rendered = false;
-    isFetching = false;
-    cont.innerHTML = "";
+    rendered = false; isFetching = false; cont.innerHTML = "";
     var cached = readCache();
-    if (cached && cached.videos && cached.videos.length) {
-      renderVideos(cached);
-      rendered = true;
-      doFetch();
-    } else {
-      doFetch();
-    }
+    if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; doFetch(); }
+    else { doFetch(); }
   });
 
   document.addEventListener("visibilitychange", function() {
     if (document.visibilityState !== "visible") return;
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
-    var cardCount = cont.querySelectorAll(".nq-card").length;
-    if (cardCount === 0) {
-      rendered = false;
-      isFetching = false;
+    if (cont.querySelectorAll(".nq-card").length === 0) {
+      rendered = false; isFetching = false;
       var cached = readCache();
-      if (cached && cached.videos && cached.videos.length) {
-        renderVideos(cached);
-        rendered = true;
-      }
+      if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; }
       doFetch();
     }
   });
@@ -305,39 +279,24 @@
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
     cont.querySelectorAll(".nq-card").forEach(function(card, i) {
-      if (allVideos[i]) {
-        var el = card.querySelector(".nq-views");
-        if (el) el.innerHTML = "&#128065; " + (allVideos[i].views || 0);
-      }
+      if (allVideos[i]) { var el = card.querySelector(".nq-views"); if (el) el.innerHTML = "&#128065; " + (allVideos[i].views || 0); }
     });
   }
 
-  /* ════════════════════════════════════════════════════════════
-     CARD BUILDER — accepts pre-fetched product so text renders
-     instantly alongside the video, no async lag
-  ════════════════════════════════════════════════════════════ */
+  /* ── Card builder: uses pre-fetched product, zero lag ── */
   function buildCard(video, index, prefetchedProduct) {
     var card = document.createElement("div");
     card.className = "nq-card nq-tile-" + tileType;
 
     var videoEl = document.createElement("video");
-    videoEl.muted       = true;
-    videoEl.loop        = true;
-    videoEl.playsInline = true;
-    videoEl.className   = "nq-video-el";
-
+    videoEl.muted = true; videoEl.loop = true; videoEl.playsInline = true;
+    videoEl.className = "nq-video-el";
     if (video.thumbnail_url) videoEl.poster = video.thumbnail_url;
     videoEl.dataset.src = video.r2_url;
 
-    if (index < 3) {
-      videoEl.preload = "auto";
-      videoEl.src     = video.r2_url;
-    } else if (index < 6) {
-      videoEl.preload = "metadata";
-      videoEl.src     = video.r2_url;
-    } else {
-      videoEl.preload = "none";
-    }
+    if (index < 3) { videoEl.preload = "auto"; videoEl.src = video.r2_url; }
+    else if (index < 6) { videoEl.preload = "metadata"; videoEl.src = video.r2_url; }
+    else { videoEl.preload = "none"; }
 
     card.onclick = function() { nqOpenPopup(blockId, index); };
 
@@ -346,27 +305,18 @@
         new IntersectionObserver(function(entries, obs) {
           entries.forEach(function(e) {
             if (e.isIntersecting) {
-              if (videoEl.dataset.src && !videoEl.src) {
-                videoEl.src     = videoEl.dataset.src;
-                videoEl.preload = "auto";
-              }
+              if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
               obs.unobserve(e.target);
             }
           });
         }, { rootMargin: "400px" }).observe(card);
       }
-
       new IntersectionObserver(function(entries) {
         entries.forEach(function(e) {
           if (e.isIntersecting) {
-            if (videoEl.dataset.src && !videoEl.src) {
-              videoEl.src     = videoEl.dataset.src;
-              videoEl.preload = "auto";
-            }
+            if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
             videoEl.play().catch(function(){});
-          } else {
-            videoEl.pause();
-          }
+          } else { videoEl.pause(); }
         });
       }, { threshold: 0.3 }).observe(card);
     } else {
@@ -378,38 +328,32 @@
     var views = document.createElement("div");
     views.className = "nq-views";
     views.innerHTML = "&#128065; " + (video.views || 0);
-
     card.appendChild(videoEl);
     card.appendChild(views);
 
-    /* Use prefetchedProduct directly — no async, no lag */
     var p = prefetchedProduct || null;
 
     switch (tileType) {
       case "img_transparent_text_overlay_3":
       case "img_transparent_text_overlay_2":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        (function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<span class="nq-ov-title">' + p.title + '</span>';
+          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        })(p);
+        }
         break;
 
       case "img_opaque_text_overlay_3":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        (function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-opaque";
           ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span>' +
-                         '<span class="nq-ov-price">&#8377;' + fmt(p.price) + '</span></div>';
+            '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span><span class="nq-ov-price">&#8377;' + fmt(p.price) + '</span></div>';
           card.appendChild(ov);
-        })(p);
+        }
         break;
 
       case "single_tile_no_overlay":
@@ -420,20 +364,17 @@
       case "product_below_2":
       case "product_below":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        (function(p) {
-          if (!p) return;
+        if (p) {
           var discHtml = '';
           if (p.compare_at_price && p.compare_at_price > p.price) {
             var pct = Math.round((p.compare_at_price - p.price) / p.compare_at_price * 100);
-            discHtml = '<span class="nq-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>' +
-                       '<span class="nq-disc-badge">' + pct + '% off</span>';
+            discHtml = '<span class="nq-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span><span class="nq-disc-badge">' + pct + '% off</span>';
           }
           var info = document.createElement("div");
           info.className = "nq-below-info";
-          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
-                           '<p class="nq-below-price">&#8377;' + fmt(p.price) + ' ' + discHtml + '</p>';
+          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">&#8377;' + fmt(p.price) + ' ' + discHtml + '</p>';
           card.appendChild(info);
-        })(p);
+        }
         break;
 
       case "story_format":
@@ -443,29 +384,25 @@
 
       case "feed_view_more":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        (function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<span class="nq-ov-title">' + p.title + '</span>';
+          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        })(p);
+        }
         break;
 
       case "feed_on_scroll":
         card.classList.add("nq-scroll-fade");
-        (function(p) {
-          if (!p) return;
+        if (p) {
           var priceRow = '&#8377;' + fmt(p.price);
           if (p.compare_at_price && p.compare_at_price > p.price)
             priceRow += ' <span class="nq-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>';
           var info = document.createElement("div");
           info.className = "nq-below-info";
-          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
-                           '<p class="nq-below-price">' + priceRow + '</p>';
+          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">' + priceRow + '</p>';
           card.appendChild(info);
-        })(p);
+        }
         break;
 
       case "grid_theme_border":
@@ -478,14 +415,12 @@
 
       case "3d_navigation":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        (function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<span class="nq-ov-title">' + p.title + '</span>';
+          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        })(p);
+        }
         break;
 
       case "minimal":
@@ -497,14 +432,12 @@
     return card;
   }
 
-  /* ════════════════════════════════════════════════════════════
-     PRODUCT HELPERS
-  ════════════════════════════════════════════════════════════ */
+  /* ── Product helpers ── */
   function fmt(cents) {
     return (Math.round(parseInt(cents)) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
-  var _productCache    = {};
+  var _productCache = {};
   var _allProductsProm = null;
 
   function prefetchAllProducts() {
@@ -514,14 +447,14 @@
       .then(function(d) {
         (d.products || []).forEach(function(p) {
           var pid = String(p.id);
-          var pv  = p.variants && p.variants[0];
+          var pv = p.variants && p.variants[0];
           if (pv && !_productCache[pid]) {
             _productCache[pid] = {
-              title:            p.title,
-              price:            Math.round(parseFloat(pv.price) * 100),
+              title: p.title,
+              price: Math.round(parseFloat(pv.price) * 100),
               compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
-              handle:           p.handle,
-              image:            p.images && p.images[0] ? p.images[0].src : null
+              handle: p.handle,
+              image: p.images && p.images[0] ? p.images[0].src : null
             };
           }
         });
@@ -530,24 +463,17 @@
     return _allProductsProm;
   }
 
-  /* Always use Shopify /products.json first (always online, no cold starts),
-     fall back to external API only if the product isn't found locally */
   function fetchProduct(gidOrId) {
     var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
     if (!id || id === "undefined") return Promise.resolve(null);
     if (_productCache[id]) return Promise.resolve(_productCache[id]);
-
-    /* Wait for prefetch to complete first */
     return prefetchAllProducts().then(function() {
       if (_productCache[id]) return _productCache[id];
-
-      /* Fallback: external API only if not found in Shopify catalog */
       return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (!d || d.error) return null;
-          _productCache[id] = d;
-          return d;
+          _productCache[id] = d; return d;
         }).catch(function() { return null; });
     });
   }
@@ -561,20 +487,18 @@
           var pr = d.product, v = pr && pr.variants && pr.variants[0];
           if (!v) return null;
           return {
-            title:            pr.title,
-            price:            Math.round(parseFloat(v.price) * 100),
+            title: pr.title,
+            price: Math.round(parseFloat(v.price) * 100),
             compare_at_price: v.compare_at_price ? Math.round(parseFloat(v.compare_at_price) * 100) : null,
-            handle:           pr.handle,
-            image:            pr.images && pr.images[0] ? pr.images[0].src : null
+            handle: pr.handle,
+            image: pr.images && pr.images[0] ? pr.images[0].src : null
           };
         }).catch(function() { return null; });
     }
     return Promise.resolve(null);
   }
 
-  /* ════════════════════════════════════════════════════════════
-     SCROLL BUTTONS / SCROLL REVEAL / 3D
-  ════════════════════════════════════════════════════════════ */
+  /* ── Scroll / 3D ── */
   function initScrollBtns() {
     var cont = document.getElementById("nq-carousel-" + blockId);
     var prev = document.getElementById("nq-prev-" + blockId);
@@ -584,7 +508,7 @@
       if (next) next.disabled = cont.scrollLeft + cont.clientWidth >= cont.scrollWidth - 2;
     }
     if (prev) prev.onclick = function() { cont.scrollBy({ left: -(cardW + 12), behavior: "smooth" }); setTimeout(upd, 350); };
-    if (next) next.onclick = function() { cont.scrollBy({ left:  (cardW + 12), behavior: "smooth" }); setTimeout(upd, 350); };
+    if (next) next.onclick = function() { cont.scrollBy({ left: (cardW + 12), behavior: "smooth" }); setTimeout(upd, 350); };
     cont.addEventListener("scroll", upd, { passive: true });
     upd();
   }
@@ -599,19 +523,16 @@
   }
 
   function init3D() {
-    var track   = document.getElementById("nq-carousel-" + blockId);
+    var track = document.getElementById("nq-carousel-" + blockId);
     var prevBtn = document.getElementById("nq-3d-prev-" + blockId);
     var nextBtn = document.getElementById("nq-3d-next-" + blockId);
-    var cards   = track.querySelectorAll(".nq-card");
-    active3D    = Math.floor(cards.length / 2);
+    var cards = track.querySelectorAll(".nq-card");
+    active3D = Math.floor(cards.length / 2);
     function render3D() {
       cards.forEach(function(card, i) {
         var diff = i - active3D, abs = Math.abs(diff);
-        card.style.cssText +=
-          ";transform:translateX(" + (diff * cardW * 0.68) + "px) translateZ(" + (abs ? -100 : 0) + "px) rotateY(" + (diff * -24) + "deg) scale(" + (abs === 0 ? 1 : abs === 1 ? 0.80 : 0.65) + ")" +
-          ";opacity:" + (abs === 0 ? 1 : abs === 1 ? 0.65 : 0.40) +
-          ";z-index:" + (20 - abs) +
-          ";transition:all 0.4s cubic-bezier(.4,0,.2,1)";
+        card.style.cssText += ";transform:translateX(" + (diff * cardW * 0.68) + "px) translateZ(" + (abs ? -100 : 0) + "px) rotateY(" + (diff * -24) + "deg) scale(" + (abs === 0 ? 1 : abs === 1 ? 0.80 : 0.65) + ")" +
+          ";opacity:" + (abs === 0 ? 1 : abs === 1 ? 0.65 : 0.40) + ";z-index:" + (20 - abs) + ";transition:all 0.4s cubic-bezier(.4,0,.2,1)";
       });
     }
     if (prevBtn) prevBtn.onclick = function() { if (active3D > 0) { active3D--; render3D(); } };
@@ -619,29 +540,22 @@
     render3D();
   }
 
-  /* ════════════════════════════════════════════════════════════
-     LIKE / SHARE ACTIONS
-  ════════════════════════════════════════════════════════════ */
+  /* ── Like / Share ── */
   window.nqToggleLike = function(bid) {
     if (bid !== blockId) return;
-    var video = allVideos[currentIndex];
-    if (!video) return;
-    var vid   = video.id;
-    var isLiked = !!likedVideos[vid];
-    likedVideos[vid] = !isLiked;
-
-    var btn   = document.getElementById("nq-like-btn-" + bid);
+    var video = allVideos[currentIndex]; if (!video) return;
+    var vid = video.id;
+    likedVideos[vid] = !likedVideos[vid];
+    var btn = document.getElementById("nq-like-btn-" + bid);
     var label = document.getElementById("nq-like-label-" + bid);
     if (btn) btn.classList.toggle("nq-liked", likedVideos[vid]);
     if (label) label.textContent = likedVideos[vid] ? "Liked" : "Like";
-
     try {
       var stored = {};
       try { stored = JSON.parse(localStorage.getItem("nq_likes") || "{}"); } catch(e2) {}
       if (likedVideos[vid]) { stored[vid] = 1; } else { delete stored[vid]; }
       localStorage.setItem("nq_likes", JSON.stringify(stored));
     } catch(e) {}
-
     trackEvent("like", video);
   };
 
@@ -649,53 +563,37 @@
     if (bid !== blockId) return;
     var video = allVideos[currentIndex];
     var shareUrl = window.location.href;
-
     if (navigator.share) {
-      navigator.share({
-        title:  document.title,
-        url:    shareUrl
-      }).catch(function() {});
+      navigator.share({ title: document.title, url: shareUrl }).catch(function() {});
     } else {
       try {
         navigator.clipboard.writeText(shareUrl).then(function() {
           var btn = document.querySelector("#nq-popup-actions-" + bid + " .nq-action-btn:last-child .nq-action-label");
-          if (btn) {
-            var orig = btn.textContent;
-            btn.textContent = "Copied!";
-            setTimeout(function() { btn.textContent = orig; }, 1800);
-          }
+          if (btn) { var orig = btn.textContent; btn.textContent = "Copied!"; setTimeout(function() { btn.textContent = orig; }, 1800); }
         }).catch(function() {});
       } catch(e) {}
     }
     if (video) trackEvent("share", video);
   };
 
-  /* ════════════════════════════════════════════════════════════
-     POPUP
-  ════════════════════════════════════════════════════════════ */
-  var isMuted        = true;
-  var touchStartY    = 0;
-  var touchStartX    = 0;
-  var swipeHintShown = false;
+  /* ── Popup ── */
+  var isMuted = true, touchStartY = 0, touchStartX = 0, swipeHintShown = false;
 
   function syncLikeBtn(bid) {
-    var video = allVideos[currentIndex];
-    if (!video) return;
+    var video = allVideos[currentIndex]; if (!video) return;
     var isLiked = !!likedVideos[video.id];
-    var btn   = document.getElementById("nq-like-btn-" + bid);
+    var btn = document.getElementById("nq-like-btn-" + bid);
     var label = document.getElementById("nq-like-label-" + bid);
-    if (btn)   btn.classList.toggle("nq-liked", isLiked);
+    if (btn) btn.classList.toggle("nq-liked", isLiked);
     if (label) label.textContent = isLiked ? "Liked" : "Like";
   }
 
   window.nqOpenPopup = function(bid, index) {
     if (bid !== blockId) return;
-
     try {
       var stored = JSON.parse(localStorage.getItem("nq_likes") || "{}");
       Object.keys(stored).forEach(function(k) { likedVideos[k] = true; });
     } catch(e) {}
-
     currentIndex = index;
     showPopup(bid);
     var popup = document.getElementById("nq-popup-" + bid);
@@ -729,7 +627,7 @@
     if (bid !== blockId) return;
     stopWatchTracking();
     var vid = document.getElementById("nq-popup-video-" + bid);
-    if (vid) { vid.pause(); vid.removeEventListener("ended", vid._nqEndedHandler || function(){}); }
+    if (vid) { vid.pause(); if (vid._nqEndedHandler) vid.removeEventListener("ended", vid._nqEndedHandler); }
     document.getElementById("nq-popup-" + bid).classList.remove("active", "nq-popup-mobile");
     document.body.style.overflow = "";
   };
@@ -763,6 +661,7 @@
       return fetch(url, { method: "GET", keepalive: true }).catch(function(){});
     } catch(e) { return Promise.resolve(); }
   }
+
   function trackView(video) {
     trackEvent("view", video);
     video.views = (video.views || 0) + 1;
@@ -775,73 +674,42 @@
     }
   }
 
-  var _watchInterval  = null;
-  var _watchStartTime = null;
-  var _watchLastTick  = null;
-  var _watchVideo     = null;
+  var _watchInterval = null, _watchStartTime = null, _watchLastTick = null, _watchVideo = null;
 
   function startWatchTracking(video) {
     stopWatchTracking();
-    _watchVideo     = video;
-    _watchStartTime = Date.now();
-    _watchLastTick  = Date.now();
-    _watchInterval  = setInterval(function() {
-      _watchLastTick = Date.now();
-      trackEvent("watch", video, 5);
-    }, 5000);
+    _watchVideo = video; _watchStartTime = Date.now(); _watchLastTick = Date.now();
+    _watchInterval = setInterval(function() { _watchLastTick = Date.now(); trackEvent("watch", video, 5); }, 5000);
   }
 
   function stopWatchTracking() {
     var p = Promise.resolve();
     if (_watchInterval) {
-      clearInterval(_watchInterval);
-      _watchInterval = null;
+      clearInterval(_watchInterval); _watchInterval = null;
       if (_watchVideo && _watchLastTick) {
         var partial = Math.floor((Date.now() - _watchLastTick) / 1000);
         if (partial > 0) { p = trackEvent("watch", _watchVideo, partial) || Promise.resolve(); }
       }
     }
-    _watchVideo     = null;
-    _watchStartTime = null;
-    _watchLastTick  = null;
+    _watchVideo = null; _watchStartTime = null; _watchLastTick = null;
     return p;
   }
 
-  window.nqTrackClick = function(el) {
-    try {
-      var vid = el.getAttribute("data-video-id"), sh = el.getAttribute("data-shop");
-      if (!vid || !sh) return;
-      fetch(TRACK + "?video_id=" + vid + "&shop=" + sh + "&event=click", { method: "GET", keepalive: true }).catch(function(){});
-      try { sessionStorage.setItem("nq_last_video", JSON.stringify({ id: vid, shop: sh, ts: Date.now() })); } catch(e) {}
-    } catch(e) {}
-  };
-
   window.nqSaveClickForAttribution = function(videoId, shopDomain) {
-    try {
-      localStorage.setItem("nq_last_click", JSON.stringify({
-        id:   videoId,
-        shop: shopDomain,
-        ts:   Date.now()
-      }));
-    } catch(e) {}
+    try { localStorage.setItem("nq_last_click", JSON.stringify({ id: videoId, shop: shopDomain, ts: Date.now() })); } catch(e) {}
   };
 
   (function() {
     try {
       var path = window.location.pathname;
-      var isOrderPage = path.indexOf("/thank_you") >= 0 ||
-                        path.indexOf("/orders/")   >= 0;
-      var hasCheckout = typeof Shopify !== "undefined" &&
-                        typeof Shopify.checkout !== "undefined";
+      var isOrderPage = path.indexOf("/thank_you") >= 0 || path.indexOf("/orders/") >= 0;
+      var hasCheckout = typeof Shopify !== "undefined" && typeof Shopify.checkout !== "undefined";
       if (!isOrderPage && !hasCheckout) return;
       var stored = null;
       try { stored = localStorage.getItem("nq_last_click"); } catch(e) {}
       if (!stored) return;
       var last = JSON.parse(stored);
-      if (Date.now() - last.ts > 60 * 60 * 1000) {
-        try { localStorage.removeItem("nq_last_click"); } catch(e) {}
-        return;
-      }
+      if (Date.now() - last.ts > 60 * 60 * 1000) { try { localStorage.removeItem("nq_last_click"); } catch(e) {} return; }
       var orderValue = 0;
       try {
         if (window.Shopify && Shopify.checkout && Shopify.checkout.total_price) {
@@ -851,54 +719,34 @@
           orderValue = parseFloat(ShopifyAnalytics.meta.checkout.total_price || 0);
         }
       } catch(e) {}
-      fetch(TRACK + "?video_id=" + encodeURIComponent(last.id) +
-                   "&shop="     + encodeURIComponent(last.shop) +
-                   "&event=order" +
-                   "&value="    + orderValue,
-            { method: "GET", keepalive: true }).catch(function(){});
+      fetch(TRACK + "?video_id=" + encodeURIComponent(last.id) + "&shop=" + encodeURIComponent(last.shop) + "&event=order&value=" + orderValue, { method: "GET", keepalive: true }).catch(function(){});
       try { localStorage.removeItem("nq_last_click"); } catch(e) {}
     } catch(e) {}
   })();
 
   var _preloadVid = document.createElement("video");
-  _preloadVid.muted       = true;
-  _preloadVid.preload     = "auto";
-  _preloadVid.style.display = "none";
+  _preloadVid.muted = true; _preloadVid.preload = "auto"; _preloadVid.style.display = "none";
   document.body.appendChild(_preloadVid);
 
   function preloadNextPopupVideo() {
     var nextIdx = (currentIndex + 1) % allVideos.length;
     var nextVideo = allVideos[nextIdx];
-    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) {
-      _preloadVid.src = nextVideo.r2_url;
-    }
+    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) _preloadVid.src = nextVideo.r2_url;
   }
 
   function showPopup(bid) {
     stopWatchTracking();
-
     var video = allVideos[currentIndex];
-    var vid   = document.getElementById("nq-popup-video-" + bid);
-
-    if (vid._nqEndedHandler) {
-      vid.removeEventListener("ended", vid._nqEndedHandler);
-      vid._nqEndedHandler = null;
-    }
-
+    var vid = document.getElementById("nq-popup-video-" + bid);
+    if (vid._nqEndedHandler) { vid.removeEventListener("ended", vid._nqEndedHandler); vid._nqEndedHandler = null; }
     vid.src = video.r2_url;
     vid.play();
     trackView(video);
     startWatchTracking(video);
     syncLikeBtn(bid);
-
-    vid._nqEndedHandler = function() {
-      currentIndex = (currentIndex + 1) % allVideos.length;
-      showPopup(bid);
-    };
+    vid._nqEndedHandler = function() { currentIndex = (currentIndex + 1) % allVideos.length; showPopup(bid); };
     vid.addEventListener("ended", vid._nqEndedHandler);
-
     setTimeout(preloadNextPopupVideo, 500);
-
     var pd = document.getElementById("nq-popup-product-" + bid);
     pd.innerHTML = "";
     if ((video.product_ids && video.product_ids.length) || (video.product_handle && video.product_handle.length)) {
@@ -908,35 +756,21 @@
 
   function renderPopupProduct(pd, p, video) {
     if (!p) return;
-
-    var priceHtml   = '&#8377;' + fmt(p.price);
+    var priceHtml = '&#8377;' + fmt(p.price);
     var compareHtml = '';
-    if (p.compare_at_price && p.compare_at_price > p.price) {
+    if (p.compare_at_price && p.compare_at_price > p.price)
       compareHtml = '<span class="nq-popup-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>';
-    }
     var videoId = video ? video.id : '';
-
     var card = document.createElement("div");
     card.className = "nq-popup-product-card";
-    if (p.image) {
-      var thumb = document.createElement("img");
-      thumb.src = p.image;
-      thumb.className = "nq-popup-thumb";
-      card.appendChild(thumb);
-    }
+    if (p.image) { var thumb = document.createElement("img"); thumb.src = p.image; thumb.className = "nq-popup-thumb"; card.appendChild(thumb); }
     var info = document.createElement("div");
     info.className = "nq-popup-product-info";
-    info.innerHTML = '<p class="nq-popup-product-title">' + p.title + '</p>' +
-                     '<p class="nq-popup-product-price">' + priceHtml + ' ' + compareHtml + '</p>';
+    info.innerHTML = '<p class="nq-popup-product-title">' + p.title + '</p><p class="nq-popup-product-price">' + priceHtml + ' ' + compareHtml + '</p>';
     card.appendChild(info);
     pd.appendChild(card);
-
     var shopBtn = document.createElement("a");
-    shopBtn.href      = "#";
-    shopBtn.className = "nq-popup-shop-btn";
-    shopBtn.style.background = btnColor;
-    shopBtn.textContent = "SHOP NOW";
-
+    shopBtn.href = "#"; shopBtn.className = "nq-popup-shop-btn"; shopBtn.style.background = btnColor; shopBtn.textContent = "SHOP NOW";
     shopBtn.addEventListener("click", function(e) {
       e.preventDefault();
       if (shopBtn._nqClicking) return;
@@ -947,40 +781,29 @@
         nqSaveClickForAttribution(videoId, shop);
         try { sessionStorage.setItem("nq_last_video", JSON.stringify({ id: videoId, shop: shop, ts: Date.now() })); } catch(e2) {}
         clickPromise = trackEvent("click", video);
-      } catch(err) {
-        clickPromise = Promise.resolve();
-      }
-      var handle = p.handle;
-      var done = false;
-      function go() {
-        if (done) return;
-        done = true;
-        window.location.href = "/products/" + handle;
-      }
+      } catch(err) { clickPromise = Promise.resolve(); }
+      var handle = p.handle, done = false;
+      function go() { if (done) return; done = true; window.location.href = "/products/" + handle; }
       clickPromise.then(go).catch(go);
       setTimeout(go, 500);
     });
-
     pd.appendChild(shopBtn);
   }
 
   init();
-
 })();
 </script>
 
-<!-- NQ Keep-Warm: warms Vercel + pre-populates cache -->
+<!-- NQ Keep-Warm -->
 <script>
 (function() {
   if (window._nqWarmInit) return;
   window._nqWarmInit = true;
-
   var API  = "https://claura-shoppable.vercel.app/api/videos";
   var shop = "{{ shop.permanent_domain }}";
   var url  = API + "?shop=" + shop;
   var KEY  = "nq_v6_" + shop + "_home";
-  var TTL  = 60 * 60 * 1000; /* 60 minutes */
-
+  var TTL  = 60 * 60 * 1000;
   function ping() {
     fetch(url, { keepalive: true })
       .then(function(r) { return r.json(); })
@@ -989,37 +812,22 @@
         try {
           var raw = localStorage.getItem(KEY);
           var shouldWrite = !raw;
-          if (!shouldWrite) {
-            var obj = JSON.parse(raw);
-            if (Date.now() - obj.ts > TTL) shouldWrite = true;
-          }
-          if (shouldWrite) {
-            localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), data: data }));
-          }
+          if (!shouldWrite) { var obj = JSON.parse(raw); if (Date.now() - obj.ts > TTL) shouldWrite = true; }
+          if (shouldWrite) localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), data: data }));
           try {
             var firstVid = data.videos[0];
             if (firstVid && firstVid.r2_url) {
               var vLink = document.querySelector('link[data-nq-keepwarm="1"]');
-              if (!vLink) {
-                vLink = document.createElement("link");
-                vLink.rel = "preload";
-                vLink.as  = "video";
-                vLink.setAttribute("data-nq-keepwarm", "1");
-                document.head.appendChild(vLink);
-              }
+              if (!vLink) { vLink = document.createElement("link"); vLink.rel = "preload"; vLink.as = "video"; vLink.setAttribute("data-nq-keepwarm", "1"); document.head.appendChild(vLink); }
               vLink.href = firstVid.r2_url;
             }
           } catch(e) {}
         } catch(e) {}
-      })
-      .catch(function() { setTimeout(ping, 20000); });
+      }).catch(function() { setTimeout(ping, 20000); });
   }
-
   ping();
   setInterval(ping, 4 * 60 * 1000);
-  document.addEventListener("visibilitychange", function() {
-    if (document.visibilityState === "visible") ping();
-  });
+  document.addEventListener("visibilitychange", function() { if (document.visibilityState === "visible") ping(); });
 })();
 </script>
 
