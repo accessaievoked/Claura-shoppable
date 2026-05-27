@@ -18,13 +18,19 @@
 
   {% if tt == 'feed_on_scroll' or tt == 'grid_theme_border' or tt == 'grid_no_border' %}
     <div class="nq-grid" id="nq-carousel-{{ block.id }}">
-      <div class="nq-loading">Loading videos...</div>
+      {%- for i in (1..6) -%}
+        <div class="nq-skeleton nq-skeleton-grid"></div>
+      {%- endfor -%}
     </div>
 
   {% elsif tt == '3d_navigation' %}
     <div class="nq-3d-wrap">
       <button class="nq-3d-prev" id="nq-3d-prev-{{ block.id }}">&#10094;</button>
-      <div class="nq-3d-track" id="nq-carousel-{{ block.id }}"></div>
+      <div class="nq-3d-track" id="nq-carousel-{{ block.id }}">
+        {%- for i in (1..5) -%}
+          <div class="nq-skeleton nq-skeleton-3d" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;"></div>
+        {%- endfor -%}
+      </div>
       <button class="nq-3d-next" id="nq-3d-next-{{ block.id }}">&#10095;</button>
     </div>
 
