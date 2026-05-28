@@ -358,7 +358,7 @@
           var ov = document.createElement("div");
           ov.className = "nq-ov-opaque";
           ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-            '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span><span class="nq-ov-price">&#8377;' + fmt(p.price) + '</span></div>';
+            '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span><span class="nq-ov-price">Rs.' + fmt(p.price) + '</span></div>';
           card.appendChild(ov);
         }
         break;
@@ -375,11 +375,11 @@
           var discHtml = '';
           if (p.compare_at_price && p.compare_at_price > p.price) {
             var pct = Math.round((p.compare_at_price - p.price) / p.compare_at_price * 100);
-            discHtml = '<span class="nq-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span><span class="nq-disc-badge">' + pct + '% off</span>';
+            discHtml = '<span class="nq-orig-price">Rs.' + fmt(p.compare_at_price) + '</span><span class="nq-disc-badge">' + pct + '% off</span>';
           }
           var info = document.createElement("div");
           info.className = "nq-below-info";
-          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">&#8377;' + fmt(p.price) + ' ' + discHtml + '</p>';
+          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">Rs.' + fmt(p.price) + ' ' + discHtml + '</p>';
           card.appendChild(info);
         }
         break;
@@ -780,10 +780,10 @@
 
   function renderPopupProduct(pd, p, video) {
     if (!p) return;
-    var priceHtml = '&#8377;' + fmt(p.price);
+    var priceHtml = 'Rs.;' + fmt(p.price);
     var compareHtml = '';
     if (p.compare_at_price && p.compare_at_price > p.price)
-      compareHtml = '<span class="nq-popup-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>';
+      compareHtml = '<span class="nq-popup-orig-price">Rs.' + fmt(p.compare_at_price) + '</span>';
     var videoId = video ? video.id : '';
     var card = document.createElement("div");
     card.className = "nq-popup-product-card";
