@@ -6,9 +6,10 @@
   position: relative;
   box-sizing: border-box;
   padding-bottom: 32px !important;
+  padding-left: 40px !important;
 }
 .nq-tile-type-3d_navigation { overflow: hidden; }
-.nq-heading { text-align: center; margin: 0 0 28px; font-weight: 400; letter-spacing: -0.3px; }
+.nq-heading { text-align: left; margin: 0 0 28px; font-weight: 400; letter-spacing: -0.3px; }
 .nq-empty { padding: 20px; color: #999; font-size: 14px; }
 .nq-loading { display: none; }
 
