@@ -402,9 +402,9 @@
       case "feed_on_scroll":
         card.classList.add("nq-scroll-fade");
         if (p) {
-          var priceRow = '&#8377;' + fmt(p.price);
+          var priceRow = 'Rs.' + fmt(p.price);
           if (p.compare_at_price && p.compare_at_price > p.price)
-            priceRow += ' <span class="nq-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>';
+            priceRow += ' <span class="nq-orig-price">Rs.' + fmt(p.compare_at_price) + '</span>';
           var info = document.createElement("div");
           info.className = "nq-below-info";
           info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">' + priceRow + '</p>';
