@@ -510,6 +510,7 @@
   .nq-section {
     padding-bottom: 35px !important;
     padding-left: 20px !important;
+    padding-right: 20px !important;
   }
   .nq-heading { margin: 0 0 8px; }
   .nq-carousel-wrap { overflow: visible; }
