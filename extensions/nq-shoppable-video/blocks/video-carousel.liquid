@@ -448,24 +448,29 @@
 
   function prefetchAllProducts() {
     if (_allProductsProm) return _allProductsProm;
-    _allProductsProm = fetch("/products.json?limit=250")
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        (d.products || []).forEach(function(p) {
-          var pid = String(p.id);
-          var pv  = p.variants && p.variants[0];
-          if (pv && !_productCache[pid]) {
-            _productCache[pid] = {
-              title:            p.title,
-              price:            Math.round(parseFloat(pv.price) * 100),
-              compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
-              handle:           p.handle,
-              image:            p.images && p.images[0] ? p.images[0].src : null
-            };
-          }
-        });
-        return _productCache;
-      }).catch(function() { return {}; });
+    function fetchPage(page, acc) {
+      return fetch("/products.json?limit=250&page=" + page)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var prods = d.products || [];
+          prods.forEach(function(p) {
+            var pid = String(p.id);
+            var pv  = p.variants && p.variants[0];
+            if (pv && !acc[pid]) {
+              acc[pid] = {
+                title:            p.title,
+                price:            Math.round(parseFloat(pv.price) * 100),
+                compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
+                handle:           p.handle,
+                image:            p.images && p.images[0] ? p.images[0].src : null
+              };
+            }
+          });
+          if (prods.length === 250) return fetchPage(page + 1, acc);
+          return acc;
+        }).catch(function() { return acc; });
+    }
+    _allProductsProm = fetchPage(1, _productCache);
     return _allProductsProm;
   }
   prefetchAllProducts();
@@ -474,7 +479,26 @@
     var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
     if (!id || id === "undefined") return Promise.resolve(null);
     if (_productCache[id]) return Promise.resolve(_productCache[id]);
-    return prefetchAllProducts().then(function(c) { return c[id] || null; });
+    return prefetchAllProducts().then(function(c) {
+      if (c[id]) return c[id];
+      // Direct fallback: fetch by numeric id
+      return fetch("/products.json?ids=" + id + "&limit=1")
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var pr = (d.products || [])[0];
+          if (!pr) return null;
+          var pv = pr.variants && pr.variants[0];
+          var result = {
+            title:            pr.title,
+            price:            Math.round(parseFloat((pv && pv.price) || 0) * 100),
+            compare_at_price: (pv && pv.compare_at_price) ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
+            handle:           pr.handle,
+            image:            (pr.images && pr.images[0]) ? pr.images[0].src : null
+          };
+          _productCache[id] = result;
+          return result;
+        }).catch(function() { return null; });
+    });
   }
 
   function getVideoProduct(video) {
