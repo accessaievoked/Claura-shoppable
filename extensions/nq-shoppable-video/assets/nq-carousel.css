@@ -115,7 +115,7 @@
 
 .nq-carousel {
   display: flex;
-  gap: 12px;
+  gap: 25px;
   overflow-x: auto;
   overflow-y: visible;
   scroll-snap-type: x mandatory;
@@ -509,6 +509,7 @@
 @media (max-width: 768px) {
   .nq-section {
     padding-bottom: 35px !important;
+    padding-left: 20px !important;
   }
   .nq-heading { margin: 0 0 8px; }
   .nq-carousel-wrap { overflow: visible; }
