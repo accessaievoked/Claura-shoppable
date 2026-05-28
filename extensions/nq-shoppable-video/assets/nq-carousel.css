@@ -530,8 +530,8 @@
   .nq-tile-product_below_2 .nq-below-info,
   .nq-tile-product_below .nq-below-info { bottom: -80px; left: 0; right: 0; padding: 6px 2px 0; }
   .nq-tile-product_below_3, .nq-tile-product_below_2, .nq-tile-product_below { margin-bottom: 90px; }
-  .nq-below-title { font-size: 11px; }
-  .nq-below-price { font-size: 11px; }
+  .nq-below-title { font-size: 13px; }
+  .nq-below-price { font-size: 13px; }
   .nq-tile-story_format { width: 82px !important; height: 82px !important; }
   .nq-tile-type-grid_theme_border .nq-grid, .nq-tile-type-grid_no_border .nq-grid { grid-template-columns: repeat(2, 1fr); }
   .nq-scroll-btn, .nq-scroll-prev, .nq-scroll-next { display: none !important; }
