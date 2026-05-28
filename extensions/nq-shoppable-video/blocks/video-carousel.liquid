@@ -437,7 +437,7 @@
     return (Math.round(parseInt(cents)) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
-  var _productCache = {};
+  var _productCache    = {};
   var _allProductsProm = null;
 
   function prefetchAllProducts() {
@@ -447,14 +447,14 @@
       .then(function(d) {
         (d.products || []).forEach(function(p) {
           var pid = String(p.id);
-          var pv = p.variants && p.variants[0];
+          var pv  = p.variants && p.variants[0];
           if (pv && !_productCache[pid]) {
             _productCache[pid] = {
-              title: p.title,
-              price: Math.round(parseFloat(pv.price) * 100),
+              title:            p.title,
+              price:            Math.round(parseFloat(pv.price) * 100),
               compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
-              handle: p.handle,
-              image: p.images && p.images[0] ? p.images[0].src : null
+              handle:           p.handle,
+              image:            p.images && p.images[0] ? p.images[0].src : null
             };
           }
         });
@@ -462,20 +462,13 @@
       }).catch(function() { return {}; });
     return _allProductsProm;
   }
+  prefetchAllProducts();
 
   function fetchProduct(gidOrId) {
     var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
     if (!id || id === "undefined") return Promise.resolve(null);
     if (_productCache[id]) return Promise.resolve(_productCache[id]);
-    return prefetchAllProducts().then(function() {
-      if (_productCache[id]) return _productCache[id];
-      return fetch("https://claura-shoppable.vercel.app/api/product?id=" + id + "&shop=" + shop)
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (!d || d.error) return null;
-          _productCache[id] = d; return d;
-        }).catch(function() { return null; });
-    });
+    return prefetchAllProducts().then(function(c) { return c[id] || null; });
   }
 
   function getVideoProduct(video) {
