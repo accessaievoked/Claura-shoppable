@@ -110,7 +110,7 @@
 /* ============================================================
    CAROUSEL (horizontal scroll)
    ============================================================ */
-.nq-carousel-wrap { position: relative; }
+.nq-carousel-wrap { position: relative; overflow: visible; }
 
 .nq-carousel {
   display: flex;
@@ -507,12 +507,10 @@
    ============================================================ */
 @media (max-width: 768px) {
   .nq-section {
-    padding: 0 !important;
     padding-bottom: 35px !important;
   }
-  .nq-heading { margin: 0 0 8px; padding: 0 16px; }
-  .nq-carousel-wrap { padding-left: 16px !important; }
-  .nq-carousel { padding-left: 0; }
+  .nq-heading { margin: 0 0 8px; }
+  .nq-carousel-wrap { overflow: visible; }
 
   .nq-tile-img_transparent_text_overlay_3,
   .nq-tile-img_opaque_text_overlay_3,

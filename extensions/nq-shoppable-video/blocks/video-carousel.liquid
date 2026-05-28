@@ -6,10 +6,10 @@
 <div id="nq-first-video-preload-{{ block.id }}"></div>
 
 <div class="nq-section nq-tile-type-{{ block.settings.tile_type }}"
-     style="padding-top: {{ block.settings.vertical_padding }}px; padding-bottom: {{ block.settings.vertical_padding }}px; padding-left: 0; padding-right: 0;">
+     style="padding-top: {{ block.settings.vertical_padding }}px; padding-bottom: {{ block.settings.vertical_padding }}px; padding-left: {{ block.settings.horizontal_padding }}px; padding-right: {{ block.settings.horizontal_padding }}px;">
 
   <h2 class="nq-heading"
-      style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }}; padding-left: {{ block.settings.horizontal_padding }}px; padding-right: {{ block.settings.horizontal_padding }}px;">
+      style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }};">
     {{ block.settings.heading }}
   </h2>
 
@@ -34,9 +34,9 @@
     </div>
 
   {% else %}
-    <div class="nq-carousel-wrap" style="padding-left: {{ block.settings.horizontal_padding }}px;">
+    <div class="nq-carousel-wrap" style="margin-left: -{{ block.settings.horizontal_padding }}px; margin-right: -{{ block.settings.horizontal_padding }}px;">
       <div class="nq-carousel" id="nq-carousel-{{ block.id }}"
-           style="scroll-padding-left: {{ block.settings.horizontal_padding }}px; padding-right: {{ block.settings.horizontal_padding }}px;">
+           style="padding-left: {{ block.settings.horizontal_padding }}px; padding-right: {{ block.settings.horizontal_padding }}px; scroll-padding-left: {{ block.settings.horizontal_padding }}px;">
         {%- for i in (1..6) -%}
           <div class="nq-skeleton nq-skeleton-card" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;flex-shrink:0;">
             <div class="nq-skeleton-text-wrap">
