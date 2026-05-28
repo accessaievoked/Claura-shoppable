@@ -267,17 +267,17 @@
 .nq-tile-product_below .nq-below-info { bottom: -78px; left: 0; right: 0; }
 
 .nq-below-title {
-  font-size: 14px; font-weight: 500; color: #111;
+  font-size: 13px; font-weight: 400; color: #111;
   margin: 0 0 5px; line-height: 1.35;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .nq-below-price {
-  font-size: 14px; font-weight: 500; color: #EF748B;
+  font-size: 13px; font-weight: 400; color: #EF748B;
   margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
 .nq-orig-price { font-size: 14px; font-weight: 500; color: #999; text-decoration: line-through; }
 .nq-disc-badge {
-  font-size: 9px; font-weight: 500;
+  font-size: 9px; font-weight: 400;
   background: #EF748B; color: #fff;
   padding: 2px 7px; border-radius: 4px;
 }
