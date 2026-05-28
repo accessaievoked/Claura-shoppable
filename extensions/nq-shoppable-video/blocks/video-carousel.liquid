@@ -9,7 +9,7 @@
      style="padding-top: {{ block.settings.vertical_padding }}px; padding-bottom: {{ block.settings.vertical_padding }}px; padding-left: {{ block.settings.horizontal_padding }}px; padding-right: {{ block.settings.horizontal_padding }}px;">
 
   <h2 class="nq-heading"
-      style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }};">
+      style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }}; text-align: {{ block.settings.heading_align }};">
     {{ block.settings.heading }}
   </h2>
 
@@ -888,6 +888,15 @@
       "default": "product_below_3"
     },
     { "type": "color",    "id": "heading_color",  "label": "Heading Color",         "default": "#000000" },
+    {
+      "type": "select", "id": "heading_align", "label": "Heading Alignment",
+      "options": [
+        { "value": "left",   "label": "Left"   },
+        { "value": "center", "label": "Center" },
+        { "value": "right",  "label": "Right"  }
+      ],
+      "default": "left"
+    },
     { "type": "color",    "id": "shop_btn_color", "label": "Shop Now Button Color", "default": "#000000" },
     { "type": "checkbox", "id": "autoplay",       "label": "Autoplay on hover",     "default": true },
     { "type": "checkbox", "id": "show_views",     "label": "Show view count",       "default": true }

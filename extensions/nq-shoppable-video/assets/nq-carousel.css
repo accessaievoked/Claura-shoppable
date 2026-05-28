@@ -9,7 +9,7 @@
   padding-left: 40px !important;
 }
 .nq-tile-type-3d_navigation { overflow: hidden; }
-.nq-heading { text-align: left; margin: 0 0 28px; font-weight: 400; letter-spacing: -0.3px; }
+.nq-heading { margin: 0 0 28px; font-weight: 400; letter-spacing: -0.3px; font-family: Poppins, sans-serif; }
 .nq-empty { padding: 20px; color: #999; font-size: 14px; }
 .nq-loading { display: none; }
 
@@ -115,7 +115,7 @@
 
 .nq-carousel {
   display: flex;
-  gap: 25px;
+  gap: 15px;
   overflow-x: auto;
   overflow-y: visible;
   scroll-snap-type: x mandatory;
