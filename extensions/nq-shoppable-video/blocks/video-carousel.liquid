@@ -205,13 +205,15 @@
 
   function init() {
     rendered = false;
-    prefetchAllProducts();
-    var cached = readCache();
-    if (cached && cached.videos && cached.videos.length) {
-      renderVideos(cached);
-      rendered = true;
-    }
-    doFetch();
+    // Always prefetch products FIRST, then render — guarantees product info shows
+    prefetchAllProducts().then(function() {
+      var cached = readCache();
+      if (cached && cached.videos && cached.videos.length) {
+        renderVideos(cached);
+        rendered = true;
+      }
+      doFetch();
+    });
   }
 
   var apiURL = API + "?shop=" + shop + (productId ? "&product_id=gid://shopify/Product/" + productId : "");
@@ -258,9 +260,11 @@
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
     rendered = false; isFetching = false; cont.innerHTML = "";
-    var cached = readCache();
-    if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; doFetch(); }
-    else { doFetch(); }
+    prefetchAllProducts().then(function() {
+      var cached = readCache();
+      if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; doFetch(); }
+      else { doFetch(); }
+    });
   });
 
   document.addEventListener("visibilitychange", function() {
@@ -269,9 +273,11 @@
     if (!cont) return;
     if (cont.querySelectorAll(".nq-card").length === 0) {
       rendered = false; isFetching = false;
-      var cached = readCache();
-      if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; }
-      doFetch();
+      prefetchAllProducts().then(function() {
+        var cached = readCache();
+        if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; }
+        doFetch();
+      });
     }
   });
 
