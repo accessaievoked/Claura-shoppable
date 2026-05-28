@@ -2,6 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 const getSupabase = () => createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const supabase = getSupabase();
 
+// Map of custom domains → myshopify domain
+// Add more entries here if you have more stores
+const DOMAIN_MAP = {
+  "claura.in":              "8613a2-5.myshopify.com",
+  "www.claura.in":          "8613a2-5.myshopify.com",
+};
+
+function resolveShopId(shop) {
+  return DOMAIN_MAP[shop] || shop;
+}
+
 export const loader = async ({ request }) => {
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -28,11 +39,13 @@ export const loader = async ({ request }) => {
       return new Response(JSON.stringify({ videos: [] }), { headers });
     }
 
-    // Return ALL live videos — filtering by show_on/product_id done client-side in liquid
+    // Resolve custom domain to myshopify domain if needed
+    const shopId = resolveShopId(shop);
+
     const { data: videos, error } = await supabase
       .from("videos")
       .select("id, title, r2_url, thumbnail_url, product_ids, show_on, views")
-      .eq("shop_id", shop)
+      .eq("shop_id", shopId)
       .eq("status", "live")
       .order("created_at", { ascending: false });
 
