@@ -6,10 +6,9 @@
   position: relative;
   box-sizing: border-box;
   padding-bottom: 32px !important;
-  padding-left: 42px !important;
 }
 .nq-tile-type-3d_navigation { overflow: hidden; }
-.nq-heading { text-align: left; margin: 0 0 28px; font-weight: 400; letter-spacing: -0.3px; font-family: Poppins, sans-serif; }
+.nq-heading { text-align: center; margin: 0 0 28px; font-weight: 400; letter-spacing: -0.3px; }
 .nq-empty { padding: 20px; color: #999; font-size: 14px; }
 .nq-loading { display: none; }
 
@@ -272,19 +271,14 @@
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .nq-below-price {
-  font-size: 13px; font-weight: 400; color: #EF748B;
-  margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-family: Poppins, sans-serif;
+  font-size: 13px; font-weight: 600; color: #EF748B;
+  margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
-.nq-orig-price {  font-size: 13px;
-    font-weight: 400;
-    color: #292929;
-    text-decoration: line-through;
-font-family: Poppins, sans-serif;}
+.nq-orig-price { font-size: 12px; font-weight: 400; color: #999; text-decoration: line-through; }
 .nq-disc-badge {
-  font-size: 9px; font-weight: 600;
+  font-size: 11px; font-weight: 700;
   background: #EF748B; color: #fff;
   padding: 2px 7px; border-radius: 4px;
-  font-family: Poppins, sans-serif;
 }
 
 /* ============================================================
@@ -514,12 +508,11 @@ font-family: Poppins, sans-serif;}
 @media (max-width: 768px) {
   .nq-section {
     padding: 0 !important;
-    padding-top: 0px !important;
     padding-bottom: 35px !important;
-    padding-left: 30px !important;
   }
-  .nq-heading { margin: 0 0 8px; padding: 0 12px; }
-  .nq-carousel { padding-left: 12px; }
+  .nq-heading { margin: 0 0 8px; padding: 0 16px; }
+  .nq-carousel-wrap { padding-left: 16px !important; }
+  .nq-carousel { padding-left: 0; }
 
   .nq-tile-img_transparent_text_overlay_3,
   .nq-tile-img_opaque_text_overlay_3,
