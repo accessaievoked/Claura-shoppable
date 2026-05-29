@@ -1,15 +1,46 @@
 {{ 'nq-floating.css' | asset_url | stylesheet_tag }}
 
 {% if product %}
-<div class="nq-float-wrap" id="nq-float-{{ block.id }}" style="display:none;">
-  <button class="nq-float-close" id="nq-float-close-{{ block.id }}">&#10005;</button>
+
+{% comment %} Derive mode + position class {% endcomment %}
+{% assign nq_mode     = block.settings.widget_mode %}
+{% assign nq_pos      = block.settings.position %}
+{% assign nq_w_desk   = block.settings.widget_size_desktop %}
+{% assign nq_w_mob    = block.settings.widget_size_mobile %}
+
+{% comment %} Rectangle aspect ratio for height calculation {% endcomment %}
+{% assign nq_h_desk   = nq_w_desk | times: 1.78 | round %}
+{% assign nq_h_mob    = nq_w_mob  | times: 1.78 | round %}
+
+{% comment %} Circle: width == height {% endcomment %}
+{% if nq_mode == 'circle' %}
+  {% assign nq_h_desk = nq_w_desk %}
+  {% assign nq_h_mob  = nq_w_mob  %}
+{% endif %}
+
+<div
+  class="nq-float-wrap nq-mode-{{ nq_mode }} nq-pos-{{ nq_pos }}"
+  id="nq-float-{{ block.id }}"
+  style="display:none; width:{{ nq_w_desk }}px; height:{{ nq_h_desk }}px;"
+  data-w-desk="{{ nq_w_desk }}"
+  data-h-desk="{{ nq_h_desk }}"
+  data-w-mob="{{ nq_w_mob }}"
+  data-h-mob="{{ nq_h_mob }}"
+  data-mode="{{ nq_mode }}"
+>
+  {% if nq_mode == 'circle' %}
+    <span class="nq-circle-hint">▼ Watch video</span>
+  {% endif %}
+
+  <button class="nq-float-close" id="nq-float-close-{{ block.id }}" aria-label="Close">&#10005;</button>
+
   <div class="nq-float-video-wrap">
     <video
       class="nq-float-video"
       id="nq-float-video-{{ block.id }}"
       autoplay muted loop playsinline
     ></video>
-    <button class="nq-float-mute" id="nq-float-mute-{{ block.id }}">&#128263;</button>
+    <button class="nq-float-mute" id="nq-float-mute-{{ block.id }}" aria-label="Toggle mute">&#128263;</button>
   </div>
 </div>
 
@@ -19,7 +50,6 @@
   var productId = "{{ product.id }}";
   var blockId   = "{{ block.id }}";
   var API       = "https://claura-shoppable.vercel.app/api/videos";
-  // Pass product_id so API returns ONLY videos tagged to THIS product
   var apiURL    = API + "?shop=" + shop + "&product_id=gid://shopify/Product/" + productId;
   var isMuted   = true;
   var manuallyClosed = false;
@@ -28,76 +58,102 @@
   var videoEl  = document.getElementById("nq-float-video-" + blockId);
   var closeBtn = document.getElementById("nq-float-close-" + blockId);
   var muteBtn  = document.getElementById("nq-float-mute-" + blockId);
+  var mode     = wrap ? wrap.dataset.mode : "rectangle";
 
+  /* ── Responsive sizing ── */
+  function applySize() {
+    if (!wrap) return;
+    var isMob = window.innerWidth <= 768;
+    var w = isMob ? parseInt(wrap.dataset.wMob) : parseInt(wrap.dataset.wDesk);
+    var h = isMob ? parseInt(wrap.dataset.hMob) : parseInt(wrap.dataset.hDesk);
+    wrap.style.width  = w + "px";
+    wrap.style.height = h + "px";
+  }
+  applySize();
+  window.addEventListener("resize", applySize, { passive: true });
+
+  /* ── Show / hide ── */
   function hideFloat() {
     wrap.classList.remove("nq-float-visible");
-    setTimeout(function() { wrap.style.display = "none"; }, 300);
+    setTimeout(function() { if (!wrap.classList.contains("nq-float-visible")) wrap.style.display = "none"; }, 320);
     videoEl.pause();
   }
 
   function showFloat() {
     if (manuallyClosed) return;
-    if (!videoEl.src) return; // no video loaded yet
+    if (!videoEl.src) return;
+    applySize();
     wrap.style.display = "block";
-    setTimeout(function() { wrap.classList.add("nq-float-visible"); }, 100);
+    setTimeout(function() { wrap.classList.add("nq-float-visible"); }, 60);
     videoEl.play().catch(function(){});
   }
 
-  // Fetch videos tagged to THIS specific product
+  /* ── Circle click → scroll to carousel ── */
+  if (mode === "circle" && wrap) {
+    wrap.addEventListener("click", function() {
+      /* Find the NQ carousel section on this page */
+      var target = document.getElementById("nq-carousel-" + blockId) ||
+                   document.querySelector(".nq-section") ||
+                   document.querySelector("[id^='nq-carousel-']");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        /* Auto-open first video in carousel after scroll */
+        setTimeout(function() {
+          var firstCard = target.querySelector(".nq-card");
+          if (firstCard) firstCard.click();
+        }, 700);
+      }
+    });
+  }
+
+  /* ── Fetch & boot ── */
   fetch(apiURL)
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var allVideos = data.videos || [];
-
-      // Client-side filter: only videos that have this product's GID in product_ids
       var gid = "gid://shopify/Product/" + productId;
       var videos = allVideos.filter(function(v) {
         var ids = Array.isArray(v.product_ids) ? v.product_ids : [];
         return ids.indexOf(gid) >= 0 || ids.indexOf(productId) >= 0;
       });
+      if (!videos.length) return;
 
-      if (!videos.length) return; // no video for this product — stay hidden
-
-      // Load the first matching video
       var video = videos[0];
       videoEl.src = video.r2_url;
       if (video.thumbnail_url) videoEl.poster = video.thumbnail_url;
       videoEl.muted = true;
       videoEl.play().catch(function(){});
 
-      // Track view
+      /* Track view */
       try {
-        fetch("https://claura-shoppable.vercel.app/api/track?video_id=" + video.id + "&shop=" + shop + "&event=view", {
-          keepalive: true
-        }).catch(function(){});
+        fetch("https://claura-shoppable.vercel.app/api/track?video_id=" + video.id + "&shop=" + shop + "&event=view", { keepalive: true }).catch(function(){});
       } catch(e) {}
 
-      // Show widget
-      wrap.style.display = "block";
-      setTimeout(function() { wrap.classList.add("nq-float-visible"); }, 100);
-
-      // Watch cart button visibility
+      showFloat();
       setTimeout(watchCartButtons, 800);
     })
     .catch(function() {});
 
-  // Close button
+  /* ── Close (rectangle only) ── */
   if (closeBtn) {
-    closeBtn.onclick = function() {
+    closeBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
       manuallyClosed = true;
       hideFloat();
-    };
+    });
   }
 
-  // Mute toggle
+  /* ── Mute (rectangle only) ── */
   if (muteBtn) {
-    muteBtn.onclick = function() {
+    muteBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
       isMuted = !isMuted;
       videoEl.muted = isMuted;
       muteBtn.innerHTML = isMuted ? "&#128263;" : "&#128266;";
-    };
+    });
   }
 
+  /* ── Watch cart button to auto show/hide ── */
   function watchCartButtons() {
     var selectors = [
       '[name="add"]', '[id*="add-to-cart"]', '[id*="AddToCart"]',
@@ -105,15 +161,12 @@
       '.btn--add-to-cart', '[data-add-to-cart]',
       'button[type="submit"].product-form__cart-submit'
     ];
-
     var cartBtn = null;
     for (var i = 0; i < selectors.length; i++) {
       cartBtn = document.querySelector(selectors[i]);
       if (cartBtn) break;
     }
-
     if (!cartBtn) {
-      // Fallback: find by text content
       var buttons = document.querySelectorAll("button, input[type=submit]");
       for (var j = 0; j < buttons.length; j++) {
         var txt = (buttons[j].textContent || buttons[j].value || "").toLowerCase();
@@ -122,24 +175,18 @@
         }
       }
     }
-
     if (!cartBtn) return;
-
     function checkPosition() {
       var rect = cartBtn.getBoundingClientRect();
-      if (rect.top > window.innerHeight) {
-        showFloat();
-      } else {
-        hideFloat();
-      }
+      if (rect.top > window.innerHeight) { showFloat(); } else { hideFloat(); }
     }
-
     window.addEventListener("scroll", checkPosition, { passive: true });
     checkPosition();
   }
 
 })();
 </script>
+
 {% endif %}
 
 {% schema %}
@@ -149,31 +196,46 @@
   "settings": [
     {
       "type": "select",
+      "id": "widget_mode",
+      "label": "Widget Style",
+      "options": [
+        { "value": "rectangle", "label": "Rectangle (portrait video)" },
+        { "value": "circle",    "label": "Circle (scroll to carousel on click)" }
+      ],
+      "default": "rectangle",
+      "info": "Circle mode hides close/mute buttons and scrolls to the video carousel when tapped."
+    },
+    {
+      "type": "select",
       "id": "position",
       "label": "Widget Position",
       "options": [
         { "value": "bottom-right", "label": "Bottom Right" },
-        { "value": "bottom-left",  "label": "Bottom Left" }
+        { "value": "bottom-left",  "label": "Bottom Left" },
+        { "value": "mid-right",    "label": "Middle Right" },
+        { "value": "mid-left",     "label": "Middle Left" }
       ],
       "default": "bottom-right"
     },
     {
       "type": "range",
-      "id": "widget_width",
-      "label": "Widget Width (px) — Desktop",
-      "min": 100,
-      "max": 300,
+      "id": "widget_size_desktop",
+      "label": "Size — Desktop (px)",
+      "info": "Width for rectangle, diameter for circle",
+      "min": 60,
+      "max": 280,
       "step": 10,
-      "default": 160
+      "default": 140
     },
     {
       "type": "range",
-      "id": "widget_width_mobile",
-      "label": "Widget Width (px) — Mobile",
-      "min": 80,
-      "max": 200,
+      "id": "widget_size_mobile",
+      "label": "Size — Mobile (px)",
+      "info": "Width for rectangle, diameter for circle",
+      "min": 50,
+      "max": 160,
       "step": 10,
-      "default": 110
+      "default": 80
     }
   ]
 }

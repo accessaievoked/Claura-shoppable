@@ -1,29 +1,64 @@
 /* ============================================================
-   NQ Floating Video Widget — compact size
+   NQ Floating Video Widget — supports rectangle + circle modes
+   Desktop & Mobile size fully controlled via CSS variables
+   set by Liquid inline style on .nq-float-wrap
    ============================================================ */
 
+/* ── Base wrap ── */
 .nq-float-wrap {
   position: fixed;
-  bottom: 24px;
-  right: 20px;
-  left: auto;
   z-index: 9000;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.32);
-  width: 60px;
-  height: 95px;
-  background: #000;
   opacity: 0;
+  pointer-events: none;
   transform: translateY(20px) scale(0.92);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
 .nq-float-wrap.nq-float-visible {
   opacity: 1;
+  pointer-events: auto;
   transform: translateY(0) scale(1);
 }
 
+/* ── RECTANGLE mode (default) ── */
+.nq-float-wrap.nq-mode-rectangle {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.32);
+  background: #000;
+}
+
+/* ── CIRCLE mode ── */
+.nq-float-wrap.nq-mode-circle {
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 5px rgba(0,0,0,0.15),
+    0 8px 32px rgba(0,0,0,0.40);
+  background: #000;
+  cursor: pointer;
+}
+
+/* Circle pulse ring animation */
+.nq-float-wrap.nq-mode-circle::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.6);
+  animation: nq-pulse-ring 2.4s ease-out infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+
+@keyframes nq-pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  60%  { transform: scale(1.12); opacity: 0; }
+  100% { transform: scale(1.12); opacity: 0; }
+}
+
+/* ── Shared video wrap ── */
 .nq-float-video-wrap {
   position: relative;
   width: 100%;
@@ -37,59 +72,108 @@
   display: block;
 }
 
-/* Close button — top right */
+/* ── Scroll-to-carousel hint (circle mode) ── */
+.nq-circle-hint {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(0,0,0,0.55);
+  background: #fff;
+  border-radius: 20px;
+  padding: 3px 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.nq-float-wrap.nq-mode-circle:hover .nq-circle-hint {
+  opacity: 1;
+}
+
+/* ── Close button ── */
 .nq-float-close {
   position: absolute;
   top: 5px;
   right: 5px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.65);
   border: none;
   color: #fff;
   font-size: 10px;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   cursor: pointer;
-  z-index: 10;
+  z-index: 15;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
   line-height: 1;
   padding: 0;
 }
-.nq-float-close:hover { background: rgba(0,0,0,0.9); }
+.nq-float-close:hover { background: rgba(0,0,0,0.9); transform: scale(1.1); }
 
-/* Mute button — bottom right */
+/* Circle mode: hide close btn (whole circle is clickable) */
+.nq-mode-circle .nq-float-close {
+  display: none;
+}
+
+/* ── Mute button (rectangle only) ── */
 .nq-float-mute {
   position: absolute;
   bottom: 5px;
   right: 5px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.65);
   border: none;
   color: #fff;
   font-size: 10px;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   cursor: pointer;
-  z-index: 10;
+  z-index: 15;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
   padding: 0;
+  transition: background 0.2s;
+}
+.nq-float-mute:hover { background: rgba(0,0,0,0.9); }
+
+/* Circle mode: hide mute (circle is for scroll-to) */
+.nq-mode-circle .nq-float-mute {
+  display: none;
 }
 
-/* Mobile */
+/* ── Play icon overlay on circle ── */
+.nq-mode-circle .nq-float-video-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0) 70%);
+  pointer-events: none;
+}
+
+/* ── Position helpers ── */
+.nq-pos-bottom-right { bottom: 24px; right: 20px; left: auto; }
+.nq-pos-bottom-left  { bottom: 24px; left: 20px;  right: auto; }
+.nq-pos-mid-right    { top: 50%; right: 20px; left: auto; transform: translateY(-50%) scale(0.92); }
+.nq-pos-mid-left     { top: 50%; left: 20px;  right: auto; transform: translateY(-50%) scale(0.92); }
+
+.nq-pos-mid-right.nq-float-visible,
+.nq-pos-mid-left.nq-float-visible  { transform: translateY(-50%) scale(1); opacity: 1; }
+
+/* Mobile overrides — controlled by CSS vars on the element */
 @media (max-width: 768px) {
   .nq-float-wrap {
-    right: auto;
-    left: 12px;
-    bottom: 75px;
-    width: 60px;
-    height: 90px;
-    border-radius: 10px;
+    bottom: 80px;
   }
 }
