@@ -461,68 +461,94 @@
       return;
     }
 
-    /* Pre-fetch all products for hero strip */
+    /* Pre-fetch all products then build strip */
     var fetches = allVideos.map(function(v) {
       return getVideoProduct(v).catch(function() { return null; });
     });
 
     Promise.all(fetches).then(function(products) {
       heroProducts = products;
+      var sideH = Math.round((cardH - 16) / 3);
 
-      /* Build side cards */
+      /* Build side cards — use IIFE to capture index correctly */
       allVideos.forEach(function(video, i) {
-        var card = document.createElement("div");
-        card.className = "nq-side-card" + (i === 0 ? " nq-side-active" : "");
-        var sideH = Math.round((cardH - 16) / 3);
-        card.style.cssText = "height:" + sideH + "px;";
+        (function(idx, v) {
+          var card = document.createElement("div");
+          card.className = "nq-side-card" + (idx === 0 ? " nq-side-active" : "");
+          card.style.height = sideH + "px";
+          card.setAttribute("data-nq-idx", idx);
 
-        /* Active ring */
-        var ring = document.createElement("div");
-        ring.className = "nq-side-ring";
-        card.appendChild(ring);
+          /* Active ring overlay */
+          var ring = document.createElement("div");
+          ring.className = "nq-side-ring";
+          card.appendChild(ring);
 
-        /* Video thumbnail */
-        var vid = document.createElement("video");
-        vid.muted = true; vid.loop = true; vid.playsInline = true;
-        vid.preload = i < 4 ? "metadata" : "none";
-        if (video.thumbnail_url) vid.poster = video.thumbnail_url;
-        if (i < 8) vid.src = video.r2_url;
-        else vid.dataset.src = video.r2_url;
-        card.appendChild(vid);
+          /* Poster image (thumbnail) — shows immediately, no blank frame */
+          if (v.thumbnail_url) {
+            var poster = document.createElement("img");
+            poster.src = v.thumbnail_url;
+            poster.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;";
+            card.appendChild(poster);
+          }
 
-        /* View count */
-        var views = document.createElement("div");
-        views.className = "nq-views";
-        views.innerHTML = "&#128065; " + (video.views || 0);
-        card.appendChild(views);
+          /* Video element for hover preview */
+          var vid = document.createElement("video");
+          vid.muted = true; vid.loop = true; vid.playsInline = true;
+          vid.preload = "none";
+          vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;opacity:0;transition:opacity 0.2s;";
+          card.style.position = "relative";
+          card.appendChild(vid);
 
-        /* Hover: play preview */
-        card.onmouseenter = function() {
-          if (!vid.src && vid.dataset.src) { vid.src = vid.dataset.src; }
-          vid.play().catch(function(){});
-        };
-        card.onmouseleave = function() { vid.pause(); vid.currentTime = 0; };
+          /* View badge */
+          var views = document.createElement("div");
+          views.className = "nq-views";
+          views.style.zIndex = "4";
+          views.innerHTML = "&#128065; " + (v.views || 0);
+          card.appendChild(views);
 
-        /* Click: set as active hero */
-        card.onclick = function() { heroSetActive(i); };
+          /* Number badge */
+          var numBadge = document.createElement("div");
+          numBadge.style.cssText = "position:absolute;top:6px;right:7px;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:2px 5px;z-index:4;";
+          numBadge.textContent = idx + 1;
+          card.appendChild(numBadge);
 
-        strip.appendChild(card);
+          /* Hover: load + play video, hide poster */
+          card.addEventListener("mouseenter", function() {
+            if (!vid.src) {
+              vid.src = v.r2_url;
+              vid.load();
+            }
+            vid.play().catch(function(){});
+            vid.style.opacity = "1";
+          });
+          card.addEventListener("mouseleave", function() {
+            vid.pause();
+            vid.style.opacity = "0";
+          });
+
+          /* Click: activate this video as hero */
+          card.addEventListener("click", function() {
+            heroSetActive(idx);
+          });
+
+          strip.appendChild(card);
+        })(i, video);
       });
 
       /* Strip scroll nav */
       var upBtn = document.getElementById("nq-strip-up-" + blockId);
       var dnBtn = document.getElementById("nq-strip-dn-" + blockId);
-      var scrollAmt = Math.round((cardH - 16) / 3) + 8;
+      var scrollAmt = sideH + 8;
       if (upBtn) upBtn.onclick = function() { strip.scrollBy({ top: -scrollAmt, behavior: "smooth" }); };
       if (dnBtn) dnBtn.onclick = function() { strip.scrollBy({ top:  scrollAmt, behavior: "smooth" }); };
 
-      /* Hero main click → open popup */
+      /* Hero main click → open fullscreen popup */
       var heroMain = document.getElementById("nq-hero-main-" + blockId);
       if (heroMain) {
         heroMain.onclick = function() { nqOpenPopup(blockId, heroIndex); };
       }
 
-      /* Activate first video */
+      /* Activate first video immediately */
       heroSetActive(0);
     });
   }
@@ -570,13 +596,16 @@
       }
     }
 
-    /* ── Highlight active side card, scroll into view ── */
+    /* ── Highlight active side card + scroll into view ── */
     var strip = document.getElementById("nq-carousel-" + blockId);
     if (strip) {
-      var cards = strip.querySelectorAll(".nq-side-card");
-      cards.forEach(function(c, i) { c.classList.toggle("nq-side-active", i === idx); });
-      if (cards[idx]) {
-        cards[idx].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+      strip.querySelectorAll(".nq-side-card").forEach(function(c) {
+        var cIdx = parseInt(c.getAttribute("data-nq-idx"), 10);
+        c.classList.toggle("nq-side-active", cIdx === idx);
+      });
+      var activeCard = strip.querySelector('.nq-side-card[data-nq-idx="' + idx + '"]');
+      if (activeCard) {
+        activeCard.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
       }
     }
   }
