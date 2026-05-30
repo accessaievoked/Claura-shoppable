@@ -1,8 +1,8 @@
 {{ 'nq-carousel.css' | asset_url | stylesheet_tag }}
-<link rel="preconnect" href="https://queuniverse-shoppable.vercel.app" crossorigin>
-<link rel="dns-prefetch" href="https://queuniverse-shoppable.vercel.app">
-<link rel="preconnect" href="https://pub-d6dfe6c73ab249958b2610cf47b17860.r2.dev" crossorigin>
-<link rel="dns-prefetch" href="https://pub-d6dfe6c73ab249958b2610cf47b17860.r2.dev">
+<link rel="preconnect" href="https://claura-shoppable.vercel.app" crossorigin>
+<link rel="dns-prefetch" href="https://claura-shoppable.vercel.app">
+<link rel="preconnect" href="https://pub-84129ff3b6e043d1a3890465a9a7ac7e.r2.dev" crossorigin>
+<link rel="dns-prefetch" href="https://pub-84129ff3b6e043d1a3890465a9a7ac7e.r2.dev">
 <div id="nq-first-video-preload-{{ block.id }}"></div>
 
 {% comment %} ── Device Visibility ── {% endcomment %}
@@ -18,121 +18,153 @@
     #nq-section-{{ block.id }} { display: block; }
   {% endif %}
 
-  /* ── Hero + Slide layout ── */
+  /* ════════════════════════════
+     HERO + SLIDE LAYOUT STYLES
+  ════════════════════════════ */
   .nq-hero-slide-wrap {
     display: flex;
     gap: 12px;
     width: 100%;
     overflow: hidden;
     position: relative;
+    align-items: flex-start;
   }
-  .nq-hero-slide-wrap .nq-hero-main {
+
+  /* ── Hero main card ── */
+  .nq-hero-main {
     flex: 0 0 auto;
-    width: clamp(260px, 52%, 420px);
-    position: relative;
+    width: clamp(240px, 55%, 420px);
     border-radius: 18px;
     overflow: hidden;
     cursor: pointer;
     background: #111;
     box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    position: relative;
     transition: box-shadow 0.2s;
   }
-  .nq-hero-slide-wrap .nq-hero-main:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.32); }
-  .nq-hero-slide-wrap .nq-hero-main video {
+  .nq-hero-main:hover { box-shadow: 0 14px 44px rgba(0,0,0,0.32); }
+  .nq-hero-main video {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
     display: block;
+    object-fit: cover;
   }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-overlay {
+  .nq-hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%);
+    background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 52%);
     pointer-events: none;
+    z-index: 1;
   }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-creator {
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 2;
-  }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-creator img {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    object-fit: cover;
-    background: #555;
-  }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-creator-info {
-    color: #fff;
-    line-height: 1.3;
-  }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-creator-name {
-    font-weight: 700;
-    font-size: 15px;
-    display: block;
-  }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-creator-meta {
-    font-size: 12px;
-    opacity: 0.85;
-    display: block;
-  }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-watermark {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 2;
-    background: rgba(255,255,255,0.92);
-    border-radius: 10px;
-    padding: 4px 8px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    color: #222;
-    pointer-events: none;
-  }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-play {
+  /* Play icon — hides on hover/playing */
+  .nq-hero-play-icon {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 54px;
-    height: 54px;
-    background: rgba(255,255,255,0.88);
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
+    background: rgba(255,255,255,0.88);
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    z-index: 2;
-    transition: opacity 0.2s;
+    z-index: 3;
+    transition: opacity 0.25s;
   }
-  .nq-hero-slide-wrap .nq-hero-main:hover .nq-hero-play { opacity: 0; }
-  .nq-hero-slide-wrap .nq-hero-main .nq-hero-play svg { margin-left: 4px; }
-
-  /* Side scroll strip */
-  .nq-hero-slide-strip-wrap {
-    flex: 1 1 0;
+  .nq-hero-main:hover .nq-hero-play-icon,
+  .nq-hero-main.nq-hero-playing .nq-hero-play-icon { opacity: 0; }
+  /* Creator bar at bottom of hero */
+  .nq-hero-creator {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 2;
+  }
+  .nq-hero-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    object-fit: cover;
+    background: #555;
+    flex-shrink: 0;
+  }
+  .nq-hero-creator-info { color: #fff; line-height: 1.3; min-width: 0; }
+  .nq-hero-creator-name {
+    font-weight: 700;
+    font-size: 15px;
+    display: block;
+    white-space: nowrap;
     overflow: hidden;
-    position: relative;
+    text-overflow: ellipsis;
+  }
+  .nq-hero-creator-meta { font-size: 12px; opacity: 0.82; display: block; }
+  /* Product info bar below hero video */
+  .nq-hero-product-bar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    background: rgba(255,255,255,0.94);
+    border-radius: 10px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 160px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .nq-hero-product-bar:hover { background: #fff; }
+  .nq-hero-product-bar img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+  .nq-hero-product-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
+  }
+  .nq-hero-product-price {
+    font-size: 11px;
+    color: #555;
+    white-space: nowrap;
+  }
+
+  /* ── Side strip ── */
+  .nq-hero-strip-outer {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    gap: 6px;
+    overflow: hidden;
   }
   .nq-hero-slide-strip {
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     scroll-behavior: smooth;
     scrollbar-width: none;
-    padding-right: 2px;
   }
   .nq-hero-slide-strip::-webkit-scrollbar { display: none; }
-  .nq-hero-slide-strip .nq-side-card {
+  /* Side card */
+  .nq-side-card {
     flex: 0 0 auto;
     border-radius: 12px;
     overflow: hidden;
@@ -142,107 +174,104 @@
     transition: transform 0.18s, box-shadow 0.18s;
     box-shadow: 0 2px 10px rgba(0,0,0,0.12);
   }
-  .nq-hero-slide-strip .nq-side-card:hover { transform: scale(1.025); box-shadow: 0 6px 22px rgba(0,0,0,0.22); }
-  .nq-hero-slide-strip .nq-side-card video {
+  .nq-side-card:hover { transform: scale(1.03); box-shadow: 0 6px 22px rgba(0,0,0,0.22); }
+  .nq-side-card video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
-  .nq-hero-slide-strip .nq-side-card .nq-side-active-ring {
+  /* Active ring */
+  .nq-side-ring {
     position: absolute;
     inset: 0;
     border-radius: 12px;
     border: 3px solid transparent;
-    transition: border-color 0.2s;
     pointer-events: none;
     z-index: 3;
+    transition: border-color 0.2s;
   }
-  .nq-hero-slide-strip .nq-side-card.nq-side-active .nq-side-active-ring {
-    border-color: #ff3366;
-  }
-  .nq-hero-slide-strip .nq-side-card .nq-views {
+  .nq-side-card.nq-side-active .nq-side-ring { border-color: #e02; }
+  .nq-side-card .nq-views {
     position: absolute;
     bottom: 6px;
     left: 8px;
     font-size: 11px;
     color: #fff;
-    background: rgba(0,0,0,0.44);
+    background: rgba(0,0,0,0.45);
     padding: 2px 6px;
     border-radius: 20px;
     z-index: 2;
   }
-
-  /* Scroll nav arrows for hero+slide */
-  .nq-hero-strip-nav {
+  /* Strip nav arrows */
+  .nq-strip-nav {
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 8px;
-    flex: 0 0 28px;
+    flex-shrink: 0;
   }
-  .nq-hero-strip-nav button {
+  .nq-strip-nav button {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     border: none;
-    background: #f0f0f0;
+    background: #ebebeb;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #333;
     transition: background 0.15s;
     padding: 0;
-    color: #333;
+    line-height: 1;
   }
-  .nq-hero-strip-nav button:hover { background: #ddd; }
+  .nq-strip-nav button:hover { background: #d5d5d5; }
 
-  /* Mobile: hero on top, strip below horizontal */
+  /* ── Mobile: stack vertically ── */
   @media (max-width: 640px) {
     .nq-hero-slide-wrap { flex-direction: column; }
-    .nq-hero-slide-wrap .nq-hero-main { width: 100%; }
-    .nq-hero-slide-strip-wrap { width: 100%; height: 150px; overflow: hidden; }
-    .nq-hero-slide-strip { flex-direction: row; height: 100%; overflow-x: auto; overflow-y: hidden; gap: 8px; }
-    .nq-hero-slide-strip .nq-side-card { flex: 0 0 100px; height: 100%; }
-    .nq-hero-strip-nav { flex-direction: row; justify-content: flex-end; }
+    .nq-hero-main { width: 100% !important; }
+    .nq-hero-strip-outer { width: 100%; height: 148px; overflow: hidden; }
+    .nq-hero-slide-strip { flex-direction: row; height: 100%; overflow-x: auto; overflow-y: hidden; }
+    .nq-side-card { flex: 0 0 90px; height: 100% !important; }
+    .nq-strip-nav { flex-direction: row; justify-content: flex-end; align-items: center; }
   }
 </style>
 
 <div id="nq-section-{{ block.id }}"
      class="nq-section nq-tile-type-{{ block.settings.tile_type }}"
-     style="padding: {{ block.settings.vertical_padding }}px {{ block.settings.horizontal_padding }}px;">
+     style="padding-top: {{ block.settings.vertical_padding }}px; padding-bottom: {{ block.settings.vertical_padding }}px; padding-left: {{ block.settings.horizontal_padding }}px; padding-right: {{ block.settings.horizontal_padding }}px;">
 
   <h2 class="nq-heading"
-      style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }};">
+      style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }}; text-align: {{ block.settings.heading_align }};">
     {{ block.settings.heading }}
   </h2>
 
   {% assign tt = block.settings.tile_type %}
 
-  {% if tt == 'feed_on_scroll' or tt == 'grid_theme_border' or tt == 'grid_no_border' %}
-    <div class="nq-grid" id="nq-carousel-{{ block.id }}">
-      <div class="nq-loading">Loading videos...</div>
-    </div>
-
-  {% elsif tt == '3d_navigation' %}
-    <div class="nq-3d-wrap">
-      <button class="nq-3d-prev" id="nq-3d-prev-{{ block.id }}">&#10094;</button>
-      <div class="nq-3d-track" id="nq-carousel-{{ block.id }}"></div>
-      <button class="nq-3d-next" id="nq-3d-next-{{ block.id }}">&#10095;</button>
-    </div>
-
-  {% elsif tt == 'hero_slide' %}
-    {% comment %} ── NEW: Hero + Side Slide layout ── {% endcomment %}
+  {% if tt == 'hero_slide' %}
+    {% comment %} ── NEW: Hero Featured + Side Slide ── {% endcomment %}
     <div class="nq-hero-slide-wrap" id="nq-hero-wrap-{{ block.id }}">
-      <div class="nq-hero-main" id="nq-hero-main-{{ block.id }}">
+
+      <!-- Hero main card -->
+      <div class="nq-hero-main" id="nq-hero-main-{{ block.id }}"
+           style="height:{{ block.settings.card_height }}px;">
+        <video id="nq-hero-video-{{ block.id }}"
+               autoplay muted loop playsinline
+               style="height:{{ block.settings.card_height }}px;"></video>
         <div class="nq-hero-overlay"></div>
-        <video id="nq-hero-video-{{ block.id }}" autoplay muted loop playsinline style="width:100%;height:{{ block.settings.card_height }}px;object-fit:cover;display:block;"></video>
-        <div class="nq-hero-play">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><polygon points="5,3 19,12 5,21" fill="#e02" /></svg>
+        <div class="nq-hero-play-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <polygon points="5,3 19,12 5,21" fill="#e02"/>
+          </svg>
         </div>
+        <!-- Product badge (top-right) -->
+        <div class="nq-hero-product-bar" id="nq-hero-product-{{ block.id }}" style="display:none;"></div>
+        <!-- Creator bar (bottom) -->
         <div class="nq-hero-creator" id="nq-hero-creator-{{ block.id }}">
-          <img id="nq-hero-avatar-{{ block.id }}" src="" onerror="this.style.display='none'" alt="">
+          <img class="nq-hero-avatar" id="nq-hero-avatar-{{ block.id }}" src="" alt="" style="display:none;">
           <div class="nq-hero-creator-info">
             <span class="nq-hero-creator-name" id="nq-hero-name-{{ block.id }}"></span>
             <span class="nq-hero-creator-meta" id="nq-hero-meta-{{ block.id }}"></span>
@@ -250,24 +279,53 @@
         </div>
       </div>
 
-      <div style="display:flex;gap:6px;flex:1;min-width:0;">
-        <div class="nq-hero-slide-strip-wrap">
-          <div class="nq-hero-slide-strip" id="nq-carousel-{{ block.id }}">
-            <div class="nq-loading" style="padding:20px;color:#999;font-size:13px;">Loading...</div>
-          </div>
+      <!-- Side strip + nav -->
+      <div class="nq-hero-strip-outer">
+        <div class="nq-hero-slide-strip" id="nq-carousel-{{ block.id }}"
+             style="max-height:{{ block.settings.card_height }}px;">
+          <!-- Side cards injected by JS -->
+          {%- for i in (1..5) -%}
+            <div class="nq-skeleton nq-skeleton-card"
+                 style="width:100%;height:{{ block.settings.card_height | divided_by: 3 }}px;flex-shrink:0;"></div>
+          {%- endfor -%}
         </div>
-        <div class="nq-hero-strip-nav">
+        <div class="nq-strip-nav">
           <button id="nq-strip-up-{{ block.id }}" title="Scroll up">&#9650;</button>
           <button id="nq-strip-dn-{{ block.id }}" title="Scroll down">&#9660;</button>
         </div>
       </div>
+
+    </div>
+
+  {% elsif tt == 'feed_on_scroll' or tt == 'grid_theme_border' or tt == 'grid_no_border' %}
+    <div class="nq-grid" id="nq-carousel-{{ block.id }}">
+      {%- for i in (1..6) -%}
+        <div class="nq-skeleton nq-skeleton-grid"></div>
+      {%- endfor -%}
+    </div>
+
+  {% elsif tt == '3d_navigation' %}
+    <div class="nq-3d-wrap">
+      <button class="nq-3d-prev" id="nq-3d-prev-{{ block.id }}">&#10094;</button>
+      <div class="nq-3d-track" id="nq-carousel-{{ block.id }}">
+        {%- for i in (1..5) -%}
+          <div class="nq-skeleton nq-skeleton-3d" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;"></div>
+        {%- endfor -%}
+      </div>
+      <button class="nq-3d-next" id="nq-3d-next-{{ block.id }}">&#10095;</button>
     </div>
 
   {% else %}
-    <div class="nq-carousel-wrap">
-      <div class="nq-carousel" id="nq-carousel-{{ block.id }}">
-        {%- for i in (1..5) -%}
-          <div class="nq-skeleton" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;flex-shrink:0;"></div>
+    <div class="nq-carousel-wrap" style="margin-left: -{{ block.settings.horizontal_padding }}px; margin-right: -{{ block.settings.horizontal_padding }}px;">
+      <div class="nq-carousel" id="nq-carousel-{{ block.id }}"
+           style="padding-left: {{ block.settings.horizontal_padding }}px; padding-right: {{ block.settings.horizontal_padding }}px; scroll-padding-left: {{ block.settings.horizontal_padding }}px;">
+        {%- for i in (1..6) -%}
+          <div class="nq-skeleton nq-skeleton-card" style="width:{{ block.settings.card_width }}px;height:{{ block.settings.card_height }}px;flex-shrink:0;">
+            <div class="nq-skeleton-text-wrap">
+              <div class="nq-skeleton-line nq-skeleton-line-title"></div>
+              <div class="nq-skeleton-line nq-skeleton-line-price"></div>
+            </div>
+          </div>
         {%- endfor -%}
       </div>
       <button class="nq-scroll-btn nq-scroll-prev" id="nq-prev-{{ block.id }}">&#10094;</button>
@@ -291,6 +349,16 @@
     <div class="nq-popup-video-wrap" id="nq-popup-wrap-{{ block.id }}">
       <button class="nq-popup-close" onclick="nqClosePopup('{{ block.id }}')">&#10005;</button>
       <button class="nq-popup-mute" id="nq-popup-mute-{{ block.id }}" onclick="nqToggleMute('{{ block.id }}')">&#128263;</button>
+      <div class="nq-popup-actions" id="nq-popup-actions-{{ block.id }}">
+        <button class="nq-action-btn" id="nq-like-btn-{{ block.id }}" onclick="nqToggleLike('{{ block.id }}')">
+          <span class="nq-action-icon">&#10084;</span>
+          <span class="nq-action-label" id="nq-like-label-{{ block.id }}">Like</span>
+        </button>
+        <button class="nq-action-btn" onclick="nqShareVideo('{{ block.id }}')">
+          <span class="nq-action-icon">&#x1F517;</span>
+          <span class="nq-action-label">Share</span>
+        </button>
+      </div>
       <video class="nq-popup-video" id="nq-popup-video-{{ block.id }}" autoplay muted playsinline></video>
       <div class="nq-popup-product" id="nq-popup-product-{{ block.id }}"></div>
       <div class="nq-swipe-hint" id="nq-swipe-hint-{{ block.id }}">
@@ -304,7 +372,7 @@
 <script>
 (function() {
   var shop     = "{{ shop.permanent_domain }}";
-  var API      = "https://queuniverse-shoppable.vercel.app/api/videos";
+  var API      = "https://claura-shoppable.vercel.app/api/videos";
   var blockId  = "{{ block.id }}";
   var tileType = "{{ block.settings.tile_type }}";
   var btnColor = "{{ block.settings.shop_btn_color }}";
@@ -314,13 +382,18 @@
   var currentIndex = 0;
   var active3D     = 0;
   var isFetching   = false;
+  var likedVideos  = {};
+
+  /* hero+slide state */
+  var heroIndex = 0;
+  var heroProducts = []; /* pre-fetched product per video index */
 
   var productId = null;
   {% if product %}
   productId = "{{ product.id }}";
   {% endif %}
 
-  /* ── Cache helpers: 10-min TTL ── */
+  /* ── Cache: 60-min TTL ── */
   (function purgeLegacyCache() {
     try {
       for (var i = localStorage.length - 1; i >= 0; i--) {
@@ -331,7 +404,7 @@
   })();
 
   var CACHE_KEY = "nq_v6_" + shop + (productId ? "_pdp_" + productId : "_home");
-  var CACHE_TTL = 10 * 60 * 1000;
+  var CACHE_TTL = 60 * 60 * 1000;
 
   function readCache() {
     try {
@@ -342,12 +415,10 @@
       return obj.data;
     } catch(e) { return null; }
   }
-
   function writeCache(data) {
     if (!data || !data.videos || !data.videos.length) return;
     try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: data })); } catch(e) {}
   }
-
   function bustCache() {
     try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
   }
@@ -371,139 +442,26 @@
   function preloadFirstVideoLink(url) {
     if (!url || document.querySelector('link[data-nq-preload="1"]')) return;
     var link = document.createElement("link");
-    link.rel          = "preload";
-    link.as           = "video";
-    link.href         = url;
+    link.rel = "preload"; link.as = "video"; link.href = url;
     link.setAttribute("data-nq-preload", "1");
     document.head.appendChild(link);
   }
 
   /* ════════════════════════════════════════════════════════════
-     HERO + SLIDE TILE TYPE
-  ════════════════════════════════════════════════════════════ */
-  var heroActiveIndex = 0;
-
-  function renderHeroSlide(data) {
-    var raw = (data && data.videos) ? data.videos : [];
-    allVideos = filterVideos(raw);
-    if (!allVideos.length) return;
-
-    preloadFirstVideoLink(allVideos[0].r2_url);
-
-    var strip = document.getElementById("nq-carousel-" + blockId);
-    if (!strip) return;
-    strip.innerHTML = "";
-
-    heroActiveIndex = 0;
-
-    /* Side-strip cards */
-    allVideos.forEach(function(video, i) {
-      var card = document.createElement("div");
-      card.className = "nq-side-card" + (i === 0 ? " nq-side-active" : "");
-      card.style.cssText = "height:" + Math.round(cardH * 0.30) + "px;";
-
-      var ring = document.createElement("div");
-      ring.className = "nq-side-active-ring";
-      card.appendChild(ring);
-
-      var vid = document.createElement("video");
-      vid.muted       = true;
-      vid.loop        = true;
-      vid.playsInline = true;
-      vid.preload     = i < 3 ? "metadata" : "none";
-      if (video.thumbnail_url) vid.poster = video.thumbnail_url;
-      if (i < 6) vid.src = video.r2_url;
-      else vid.dataset.src = video.r2_url;
-      card.appendChild(vid);
-
-      var views = document.createElement("div");
-      views.className = "nq-views";
-      views.innerHTML = "&#128065; " + (video.views || 0);
-      card.appendChild(views);
-
-      card.onclick = function() { heroSetActive(i); };
-
-      /* Hover play for side cards */
-      card.onmouseenter = function() { if (vid.src) vid.play().catch(function(){}); };
-      card.onmouseleave = function() { vid.pause(); vid.currentTime = 0; };
-
-      strip.appendChild(card);
-    });
-
-    /* Load hero main video */
-    heroSetActive(0);
-
-    /* Strip scroll nav */
-    var upBtn = document.getElementById("nq-strip-up-" + blockId);
-    var dnBtn = document.getElementById("nq-strip-dn-" + blockId);
-    var scrollAmt = Math.round(cardH * 0.30) + 10;
-    if (upBtn) upBtn.onclick = function() { strip.scrollBy({ top: -scrollAmt, behavior: "smooth" }); };
-    if (dnBtn) dnBtn.onclick = function() { strip.scrollBy({ top:  scrollAmt, behavior: "smooth" }); };
-
-    /* Click on hero main opens popup */
-    var heroMain = document.getElementById("nq-hero-main-" + blockId);
-    if (heroMain) {
-      heroMain.onclick = function() { nqOpenPopup(blockId, heroActiveIndex); };
-    }
-  }
-
-  function heroSetActive(idx) {
-    heroActiveIndex = idx;
-    currentIndex    = idx; // keep popup in sync
-
-    var video = allVideos[idx];
-    if (!video) return;
-
-    /* Update hero video */
-    var heroVid = document.getElementById("nq-hero-video-" + blockId);
-    if (heroVid) {
-      heroVid.src = video.r2_url;
-      heroVid.load();
-      heroVid.play().catch(function(){});
-    }
-
-    /* Update creator info */
-    var nameEl = document.getElementById("nq-hero-name-" + blockId);
-    var metaEl = document.getElementById("nq-hero-meta-" + blockId);
-    var avatarEl = document.getElementById("nq-hero-avatar-" + blockId);
-    if (nameEl) nameEl.textContent = video.creator_name || video.title || "";
-    if (metaEl) metaEl.textContent = (video.followers ? video.followers + " followers" : "") +
-                                     (video.likes ? " | " + video.likes + " likes" : "");
-    if (avatarEl) {
-      avatarEl.src = video.creator_avatar || video.thumbnail_url || "";
-      avatarEl.style.display = (video.creator_avatar || video.thumbnail_url) ? "block" : "none";
-    }
-
-    /* Highlight active side card */
-    var strip = document.getElementById("nq-carousel-" + blockId);
-    if (strip) {
-      strip.querySelectorAll(".nq-side-card").forEach(function(c, i) {
-        c.classList.toggle("nq-side-active", i === idx);
-      });
-      /* Scroll active card into view */
-      var activeCard = strip.querySelectorAll(".nq-side-card")[idx];
-      if (activeCard) {
-        activeCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-    }
-  }
-
-  /* ════════════════════════════════════════════════════════════
-     MAIN RENDER (all tile types)
+     RENDER DISPATCHER
   ════════════════════════════════════════════════════════════ */
   function renderVideos(data) {
-    /* Hero+Slide has its own renderer */
-    if (tileType === "hero_slide") { renderHeroSlide(data); return; }
-
     var raw = (data && data.videos) ? data.videos : [];
     allVideos = filterVideos(raw);
-
     if (allVideos.length) preloadFirstVideoLink(allVideos[0].r2_url);
 
-    var cont = document.getElementById("nq-carousel-" + blockId);
-    if (!cont) { console.warn("[NQ] container not found"); return; }
+    if (tileType === "hero_slide") {
+      renderHeroSlide();
+      return;
+    }
 
-    cont.innerHTML = "";
+    var cont = document.getElementById("nq-carousel-" + blockId);
+    if (!cont) return;
 
     if (!allVideos.length) {
       if (productId) {
@@ -515,16 +473,15 @@
       return;
     }
 
-    allVideos.slice(0, 3).forEach(function(v, i) { cont.appendChild(buildCard(v, i)); });
-
-    if (allVideos.length > 3) {
-      requestAnimationFrame(function() {
-        allVideos.slice(3).forEach(function(v, i) { cont.appendChild(buildCard(v, i + 3)); });
-        finishSetup(cont);
-      });
-    } else {
+    /* Pre-fetch all products then render at once (original Claura pattern) */
+    var productFetches = allVideos.map(function(v) {
+      return getVideoProduct(v).catch(function() { return null; });
+    });
+    Promise.all(productFetches).then(function(products) {
+      cont.innerHTML = "";
+      allVideos.forEach(function(v, i) { cont.appendChild(buildCard(v, i, products[i])); });
       finishSetup(cont);
-    }
+    });
   }
 
   function finishSetup(cont) {
@@ -533,16 +490,177 @@
     else                                   initScrollBtns();
   }
 
+  /* ════════════════════════════════════════════════════════════
+     HERO + SLIDE RENDERER
+  ════════════════════════════════════════════════════════════ */
+  function renderHeroSlide() {
+    var strip = document.getElementById("nq-carousel-" + blockId);
+    if (!strip) return;
+    strip.innerHTML = "";
+    heroProducts = [];
+    heroIndex = 0;
+
+    if (!allVideos.length) {
+      var wrap = document.getElementById("nq-hero-wrap-" + blockId);
+      if (wrap) wrap.style.display = "none";
+      return;
+    }
+
+    /* Pre-fetch all products for hero strip */
+    var fetches = allVideos.map(function(v) {
+      return getVideoProduct(v).catch(function() { return null; });
+    });
+
+    Promise.all(fetches).then(function(products) {
+      heroProducts = products;
+
+      /* Build side cards */
+      allVideos.forEach(function(video, i) {
+        var card = document.createElement("div");
+        card.className = "nq-side-card" + (i === 0 ? " nq-side-active" : "");
+        var sideH = Math.round(cardH * 0.30);
+        card.style.cssText = "height:" + sideH + "px;";
+
+        /* Active ring */
+        var ring = document.createElement("div");
+        ring.className = "nq-side-ring";
+        card.appendChild(ring);
+
+        /* Video thumbnail */
+        var vid = document.createElement("video");
+        vid.muted = true; vid.loop = true; vid.playsInline = true;
+        vid.preload = i < 4 ? "metadata" : "none";
+        if (video.thumbnail_url) vid.poster = video.thumbnail_url;
+        if (i < 8) vid.src = video.r2_url;
+        else vid.dataset.src = video.r2_url;
+        card.appendChild(vid);
+
+        /* View count */
+        var views = document.createElement("div");
+        views.className = "nq-views";
+        views.innerHTML = "&#128065; " + (video.views || 0);
+        card.appendChild(views);
+
+        /* Hover: play preview */
+        card.onmouseenter = function() {
+          if (!vid.src && vid.dataset.src) { vid.src = vid.dataset.src; }
+          vid.play().catch(function(){});
+        };
+        card.onmouseleave = function() { vid.pause(); vid.currentTime = 0; };
+
+        /* Click: set as active hero */
+        card.onclick = function() { heroSetActive(i); };
+
+        strip.appendChild(card);
+      });
+
+      /* Strip scroll nav */
+      var upBtn = document.getElementById("nq-strip-up-" + blockId);
+      var dnBtn = document.getElementById("nq-strip-dn-" + blockId);
+      var scrollAmt = Math.round(cardH * 0.30) + 10;
+      if (upBtn) upBtn.onclick = function() { strip.scrollBy({ top: -scrollAmt, behavior: "smooth" }); };
+      if (dnBtn) dnBtn.onclick = function() { strip.scrollBy({ top:  scrollAmt, behavior: "smooth" }); };
+
+      /* Hero main click → open popup */
+      var heroMain = document.getElementById("nq-hero-main-" + blockId);
+      if (heroMain) {
+        heroMain.onclick = function() { nqOpenPopup(blockId, heroIndex); };
+      }
+
+      /* Activate first video */
+      heroSetActive(0);
+    });
+  }
+
+  function heroSetActive(idx) {
+    heroIndex    = idx;
+    currentIndex = idx; /* keep popup in sync */
+
+    var video = allVideos[idx];
+    if (!video) return;
+
+    /* ── Update hero video ── */
+    var heroVid = document.getElementById("nq-hero-video-" + blockId);
+    var heroMain = document.getElementById("nq-hero-main-" + blockId);
+    if (heroVid) {
+      heroVid.src = video.r2_url;
+      heroVid.load();
+      heroVid.play().then(function() {
+        if (heroMain) heroMain.classList.add("nq-hero-playing");
+      }).catch(function() {});
+      heroVid.onended = null; /* loop attr handles it */
+    }
+
+    /* ── Creator bar ── */
+    var nameEl   = document.getElementById("nq-hero-name-"    + blockId);
+    var metaEl   = document.getElementById("nq-hero-meta-"    + blockId);
+    var avatarEl = document.getElementById("nq-hero-avatar-"  + blockId);
+    if (nameEl)   nameEl.textContent   = video.creator_name || video.title || "";
+    if (metaEl)   metaEl.textContent   =
+        (video.followers ? video.followers + " followers" : "") +
+        (video.followers && video.likes ? " | " : "") +
+        (video.likes     ? video.likes  + " likes"       : "");
+    if (avatarEl) {
+      var avatarSrc = video.creator_avatar || video.thumbnail_url || "";
+      if (avatarSrc) {
+        avatarEl.src = avatarSrc;
+        avatarEl.style.display = "block";
+      } else {
+        avatarEl.style.display = "none";
+      }
+    }
+
+    /* ── Product badge ── */
+    var productBar = document.getElementById("nq-hero-product-" + blockId);
+    if (productBar) {
+      productBar.style.display = "none";
+      productBar.innerHTML = "";
+      var p = heroProducts[idx];
+      if (p) {
+        if (p.image) {
+          var img = document.createElement("img");
+          img.src = p.image; img.alt = p.title;
+          productBar.appendChild(img);
+        }
+        var pInfo = document.createElement("div");
+        pInfo.style.minWidth = "0";
+        pInfo.innerHTML = '<div class="nq-hero-product-title">' + p.title + '</div>' +
+                          '<div class="nq-hero-product-price">Rs. ' + fmt(p.price) + '</div>';
+        productBar.appendChild(pInfo);
+        productBar.style.display = "flex";
+        productBar.onclick = function(e) {
+          e.stopPropagation();
+          window.location.href = "/products/" + p.handle;
+        };
+      }
+    }
+
+    /* ── Highlight active side card, scroll into view ── */
+    var strip = document.getElementById("nq-carousel-" + blockId);
+    if (strip) {
+      var cards = strip.querySelectorAll(".nq-side-card");
+      cards.forEach(function(c, i) { c.classList.toggle("nq-side-active", i === idx); });
+      if (cards[idx]) {
+        cards[idx].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+      }
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════════════════════════ */
   var rendered = false;
 
   function init() {
     rendered = false;
-    var cached = readCache();
-    if (cached && cached.videos && cached.videos.length) {
-      renderVideos(cached);
-      rendered = true;
-    }
-    doFetch();
+    prefetchAllProducts().then(function() {
+      var cached = readCache();
+      if (cached && cached.videos && cached.videos.length) {
+        renderVideos(cached);
+        rendered = true;
+      }
+      doFetch();
+    });
   }
 
   var apiURL = API + "?shop=" + shop + (productId ? "&product_id=gid://shopify/Product/" + productId : "");
@@ -552,7 +670,6 @@
     if (isFetching) return;
     isFetching = true;
     tries = tries || 3;
-
     if (!rendered) {
       giveUpTimer = setTimeout(function() {
         if (!rendered) {
@@ -561,29 +678,19 @@
         }
       }, 12000);
     }
-
     fetch(apiURL)
-      .then(function(r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
+      .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function(data) {
         isFetching = false;
         if (giveUpTimer) { clearTimeout(giveUpTimer); giveUpTimer = null; }
         writeCache(data);
-        if (!rendered) {
-          renderVideos(data);
-          rendered = true;
-        } else {
-          allVideos = filterVideos(data.videos || []);
-          refreshViewCounters();
-        }
+        if (!rendered) { renderVideos(data); rendered = true; }
+        else { allVideos = filterVideos(data.videos || []); refreshViewCounters(); }
       })
       .catch(function(err) {
         isFetching = false;
-        if (tries > 1) {
-          setTimeout(function() { isFetching = false; doFetch(tries - 1); }, 3000);
-        } else {
+        if (tries > 1) { setTimeout(function() { isFetching = false; doFetch(tries - 1); }, 3000); }
+        else {
           if (giveUpTimer) { clearTimeout(giveUpTimer); giveUpTimer = null; }
           if (!rendered) {
             var cont = document.getElementById("nq-carousel-" + blockId);
@@ -593,37 +700,29 @@
       });
   }
 
-  /* ── Back-nav / bfcache ── */
   window.addEventListener("pageshow", function(e) {
     if (!e.persisted) return;
-    rendered = false;
-    isFetching = false;
     var cont = document.getElementById("nq-carousel-" + blockId);
-    if (cont) cont.innerHTML = "";
-    var cached = readCache();
-    if (cached && cached.videos && cached.videos.length) {
-      renderVideos(cached);
-      rendered = true;
-      doFetch();
-    } else {
-      doFetch();
-    }
+    if (!cont) return;
+    rendered = false; isFetching = false; cont.innerHTML = "";
+    prefetchAllProducts().then(function() {
+      var cached = readCache();
+      if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; doFetch(); }
+      else { doFetch(); }
+    });
   });
 
-  /* ── Tab visibility ── */
   document.addEventListener("visibilitychange", function() {
     if (document.visibilityState !== "visible") return;
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
     if (cont.querySelectorAll(".nq-card,.nq-side-card").length === 0) {
-      rendered = false;
-      isFetching = false;
-      var cached = readCache();
-      if (cached && cached.videos && cached.videos.length) {
-        renderVideos(cached);
-        rendered = true;
-      }
-      doFetch();
+      rendered = false; isFetching = false;
+      prefetchAllProducts().then(function() {
+        var cached = readCache();
+        if (cached && cached.videos && cached.videos.length) { renderVideos(cached); rendered = true; }
+        doFetch();
+      });
     }
   });
 
@@ -631,38 +730,26 @@
     var cont = document.getElementById("nq-carousel-" + blockId);
     if (!cont) return;
     cont.querySelectorAll(".nq-card,.nq-side-card").forEach(function(card, i) {
-      if (allVideos[i]) {
-        var el = card.querySelector(".nq-views");
-        if (el) el.innerHTML = "&#128065; " + (allVideos[i].views || 0);
-      }
+      if (allVideos[i]) { var el = card.querySelector(".nq-views"); if (el) el.innerHTML = "&#128065; " + (allVideos[i].views || 0); }
     });
   }
 
   /* ════════════════════════════════════════════════════════════
-     CARD BUILDER (original tile types unchanged)
+     CARD BUILDER (original tile types — unchanged)
   ════════════════════════════════════════════════════════════ */
-  function buildCard(video, index) {
+  function buildCard(video, index, prefetchedProduct) {
     var card = document.createElement("div");
     card.className = "nq-card nq-tile-" + tileType;
 
     var videoEl = document.createElement("video");
-    videoEl.muted       = true;
-    videoEl.loop        = true;
-    videoEl.playsInline = true;
-    videoEl.className   = "nq-video-el";
-
+    videoEl.muted = true; videoEl.loop = true; videoEl.playsInline = true;
+    videoEl.className = "nq-video-el";
     if (video.thumbnail_url) videoEl.poster = video.thumbnail_url;
     videoEl.dataset.src = video.r2_url;
 
-    if (index < 3) {
-      videoEl.preload = "auto";
-      videoEl.src     = video.r2_url;
-    } else if (index < 6) {
-      videoEl.preload = "metadata";
-      videoEl.src     = video.r2_url;
-    } else {
-      videoEl.preload = "none";
-    }
+    if (index < 3) { videoEl.preload = "auto"; videoEl.src = video.r2_url; }
+    else if (index < 6) { videoEl.preload = "metadata"; videoEl.src = video.r2_url; }
+    else { videoEl.preload = "none"; }
 
     card.onclick = function() { nqOpenPopup(blockId, index); };
 
@@ -671,27 +758,18 @@
         new IntersectionObserver(function(entries, obs) {
           entries.forEach(function(e) {
             if (e.isIntersecting) {
-              if (videoEl.dataset.src && !videoEl.src) {
-                videoEl.src     = videoEl.dataset.src;
-                videoEl.preload = "auto";
-              }
+              if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
               obs.unobserve(e.target);
             }
           });
         }, { rootMargin: "400px" }).observe(card);
       }
-
       new IntersectionObserver(function(entries) {
         entries.forEach(function(e) {
           if (e.isIntersecting) {
-            if (videoEl.dataset.src && !videoEl.src) {
-              videoEl.src     = videoEl.dataset.src;
-              videoEl.preload = "auto";
-            }
+            if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
             videoEl.play().catch(function(){});
-          } else {
-            videoEl.pause();
-          }
+          } else { videoEl.pause(); }
         });
       }, { threshold: 0.3 }).observe(card);
     } else {
@@ -703,35 +781,32 @@
     var views = document.createElement("div");
     views.className = "nq-views";
     views.innerHTML = "&#128065; " + (video.views || 0);
-
     card.appendChild(videoEl);
     card.appendChild(views);
+
+    var p = prefetchedProduct || null;
 
     switch (tileType) {
       case "img_transparent_text_overlay_3":
       case "img_transparent_text_overlay_2":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        getVideoProduct(video).then(function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<span class="nq-ov-title">' + p.title + '</span>';
+          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        });
+        }
         break;
 
       case "img_opaque_text_overlay_3":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        getVideoProduct(video).then(function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-opaque";
           ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span>' +
-                         '<span class="nq-ov-price">&#8377;' + fmt(p.price) + '</span></div>';
+            '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span><span class="nq-ov-price">Rs. ' + fmt(p.price) + '</span></div>';
           card.appendChild(ov);
-        });
+        }
         break;
 
       case "single_tile_no_overlay":
@@ -742,20 +817,17 @@
       case "product_below_2":
       case "product_below":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        getVideoProduct(video).then(function(p) {
-          if (!p) return;
+        if (p) {
           var discHtml = '';
           if (p.compare_at_price && p.compare_at_price > p.price) {
             var pct = Math.round((p.compare_at_price - p.price) / p.compare_at_price * 100);
-            discHtml = '<span class="nq-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>' +
-                       '<span class="nq-disc-badge">' + pct + '% off</span>';
+            discHtml = '<span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span><span class="nq-disc-badge">' + pct + '% off</span>';
           }
           var info = document.createElement("div");
           info.className = "nq-below-info";
-          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
-                           '<p class="nq-below-price">&#8377;' + fmt(p.price) + ' ' + discHtml + '</p>';
+          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">Rs. ' + fmt(p.price) + ' ' + discHtml + '</p>';
           card.appendChild(info);
-        });
+        }
         break;
 
       case "story_format":
@@ -765,29 +837,25 @@
 
       case "feed_view_more":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        getVideoProduct(video).then(function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<span class="nq-ov-title">' + p.title + '</span>';
+          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        });
+        }
         break;
 
       case "feed_on_scroll":
         card.classList.add("nq-scroll-fade");
-        getVideoProduct(video).then(function(p) {
-          if (!p) return;
-          var priceRow = '&#8377;' + fmt(p.price);
+        if (p) {
+          var priceRow = 'Rs. ' + fmt(p.price);
           if (p.compare_at_price && p.compare_at_price > p.price)
-            priceRow += ' <span class="nq-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>';
+            priceRow += ' <span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span>';
           var info = document.createElement("div");
           info.className = "nq-below-info";
-          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
-                           '<p class="nq-below-price">' + priceRow + '</p>';
+          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">' + priceRow + '</p>';
           card.appendChild(info);
-        });
+        }
         break;
 
       case "grid_theme_border":
@@ -800,14 +868,12 @@
 
       case "3d_navigation":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        getVideoProduct(video).then(function(p) {
-          if (!p) return;
+        if (p) {
           var ov = document.createElement("div");
           ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-                         '<span class="nq-ov-title">' + p.title + '</span>';
+          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
           card.appendChild(ov);
-        });
+        }
         break;
 
       case "minimal":
@@ -819,36 +885,37 @@
     return card;
   }
 
-  /* ════════════════════════════════════════════════════════════
-     PRODUCT HELPERS (unchanged)
-  ════════════════════════════════════════════════════════════ */
+  /* ── Product helpers ── */
   function fmt(cents) {
     return (Math.round(parseInt(cents)) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
-  var _productCache    = {};
-  var _allProductsProm = null;
+  var _productCache = {}, _allProductsProm = null;
 
   function prefetchAllProducts() {
     if (_allProductsProm) return _allProductsProm;
-    _allProductsProm = fetch("/products.json?limit=250")
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        (d.products || []).forEach(function(p) {
-          var pid = String(p.id);
-          var pv  = p.variants && p.variants[0];
-          if (pv && !_productCache[pid]) {
-            _productCache[pid] = {
-              title:            p.title,
-              price:            Math.round(parseFloat(pv.price) * 100),
-              compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
-              handle:           p.handle,
-              image:            p.images && p.images[0] ? p.images[0].src : null
-            };
-          }
-        });
-        return _productCache;
-      }).catch(function() { return {}; });
+    function fetchPage(page, acc) {
+      return fetch("/products.json?limit=250&page=" + page)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var prods = d.products || [];
+          prods.forEach(function(p) {
+            var pid = String(p.id), pv = p.variants && p.variants[0];
+            if (pv && !acc[pid]) {
+              acc[pid] = {
+                title: p.title,
+                price: Math.round(parseFloat(pv.price) * 100),
+                compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
+                handle: p.handle,
+                image: p.images && p.images[0] ? p.images[0].src : null
+              };
+            }
+          });
+          if (prods.length === 250) return fetchPage(page + 1, acc);
+          return acc;
+        }).catch(function() { return acc; });
+    }
+    _allProductsProm = fetchPage(1, _productCache);
     return _allProductsProm;
   }
   prefetchAllProducts();
@@ -857,7 +924,25 @@
     var id = String(gidOrId).replace("gid://shopify/Product/", "").trim();
     if (!id || id === "undefined") return Promise.resolve(null);
     if (_productCache[id]) return Promise.resolve(_productCache[id]);
-    return prefetchAllProducts().then(function(c) { return c[id] || null; });
+    return prefetchAllProducts().then(function(c) {
+      if (c[id]) return c[id];
+      return fetch("/products.json?ids=" + id + "&limit=1")
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var pr = (d.products || [])[0];
+          if (!pr) return null;
+          var pv = pr.variants && pr.variants[0];
+          var result = {
+            title: pr.title,
+            price: Math.round(parseFloat((pv && pv.price) || 0) * 100),
+            compare_at_price: (pv && pv.compare_at_price) ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
+            handle: pr.handle,
+            image: (pr.images && pr.images[0]) ? pr.images[0].src : null
+          };
+          _productCache[id] = result;
+          return result;
+        }).catch(function() { return null; });
+    });
   }
 
   function getVideoProduct(video) {
@@ -869,20 +954,16 @@
           var pr = d.product, v = pr && pr.variants && pr.variants[0];
           if (!v) return null;
           return {
-            title:            pr.title,
-            price:            Math.round(parseFloat(v.price) * 100),
+            title: pr.title, price: Math.round(parseFloat(v.price) * 100),
             compare_at_price: v.compare_at_price ? Math.round(parseFloat(v.compare_at_price) * 100) : null,
-            handle:           pr.handle,
-            image:            pr.images && pr.images[0] ? pr.images[0].src : null
+            handle: pr.handle, image: pr.images && pr.images[0] ? pr.images[0].src : null
           };
         }).catch(function() { return null; });
     }
     return Promise.resolve(null);
   }
 
-  /* ════════════════════════════════════════════════════════════
-     SCROLL / 3D (unchanged)
-  ════════════════════════════════════════════════════════════ */
+  /* ── Scroll / 3D ── */
   function initScrollBtns() {
     var cont = document.getElementById("nq-carousel-" + blockId);
     var prev = document.getElementById("nq-prev-" + blockId);
@@ -892,7 +973,7 @@
       if (next) next.disabled = cont.scrollLeft + cont.clientWidth >= cont.scrollWidth - 2;
     }
     if (prev) prev.onclick = function() { cont.scrollBy({ left: -(cardW + 12), behavior: "smooth" }); setTimeout(upd, 350); };
-    if (next) next.onclick = function() { cont.scrollBy({ left:  (cardW + 12), behavior: "smooth" }); setTimeout(upd, 350); };
+    if (next) next.onclick = function() { cont.scrollBy({ left: (cardW + 12), behavior: "smooth" }); setTimeout(upd, 350); };
     cont.addEventListener("scroll", upd, { passive: true });
     upd();
   }
@@ -907,19 +988,16 @@
   }
 
   function init3D() {
-    var track   = document.getElementById("nq-carousel-" + blockId);
+    var track = document.getElementById("nq-carousel-" + blockId);
     var prevBtn = document.getElementById("nq-3d-prev-" + blockId);
     var nextBtn = document.getElementById("nq-3d-next-" + blockId);
-    var cards   = track.querySelectorAll(".nq-card");
-    active3D    = Math.floor(cards.length / 2);
+    var cards = track.querySelectorAll(".nq-card");
+    active3D = Math.floor(cards.length / 2);
     function render3D() {
       cards.forEach(function(card, i) {
         var diff = i - active3D, abs = Math.abs(diff);
-        card.style.cssText +=
-          ";transform:translateX(" + (diff * cardW * 0.68) + "px) translateZ(" + (abs ? -100 : 0) + "px) rotateY(" + (diff * -24) + "deg) scale(" + (abs === 0 ? 1 : abs === 1 ? 0.80 : 0.65) + ")" +
-          ";opacity:" + (abs === 0 ? 1 : abs === 1 ? 0.65 : 0.40) +
-          ";z-index:" + (20 - abs) +
-          ";transition:all 0.4s cubic-bezier(.4,0,.2,1)";
+        card.style.cssText += ";transform:translateX(" + (diff * cardW * 0.68) + "px) translateZ(" + (abs ? -100 : 0) + "px) rotateY(" + (diff * -24) + "deg) scale(" + (abs === 0 ? 1 : abs === 1 ? 0.80 : 0.65) + ")" +
+          ";opacity:" + (abs === 0 ? 1 : abs === 1 ? 0.65 : 0.40) + ";z-index:" + (20 - abs) + ";transition:all 0.4s cubic-bezier(.4,0,.2,1)";
       });
     }
     if (prevBtn) prevBtn.onclick = function() { if (active3D > 0) { active3D--; render3D(); } };
@@ -927,16 +1005,60 @@
     render3D();
   }
 
-  /* ════════════════════════════════════════════════════════════
-     POPUP (unchanged)
-  ════════════════════════════════════════════════════════════ */
-  var isMuted       = true;
-  var touchStartY   = 0;
-  var touchStartX   = 0;
-  var swipeHintShown = false;
+  /* ── Like / Share ── */
+  window.nqToggleLike = function(bid) {
+    if (bid !== blockId) return;
+    var video = allVideos[currentIndex]; if (!video) return;
+    var vid = video.id;
+    likedVideos[vid] = !likedVideos[vid];
+    var btn = document.getElementById("nq-like-btn-" + bid);
+    var label = document.getElementById("nq-like-label-" + bid);
+    if (btn) btn.classList.toggle("nq-liked", likedVideos[vid]);
+    if (label) label.textContent = likedVideos[vid] ? "Liked" : "Like";
+    try {
+      var stored = {};
+      try { stored = JSON.parse(localStorage.getItem("nq_likes") || "{}"); } catch(e2) {}
+      if (likedVideos[vid]) { stored[vid] = 1; } else { delete stored[vid]; }
+      localStorage.setItem("nq_likes", JSON.stringify(stored));
+    } catch(e) {}
+    trackEvent("like", video);
+  };
+
+  window.nqShareVideo = function(bid) {
+    if (bid !== blockId) return;
+    var video = allVideos[currentIndex];
+    var shareUrl = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: document.title, url: shareUrl }).catch(function() {});
+    } else {
+      try {
+        navigator.clipboard.writeText(shareUrl).then(function() {
+          var btn = document.querySelector("#nq-popup-actions-" + bid + " .nq-action-btn:last-child .nq-action-label");
+          if (btn) { var orig = btn.textContent; btn.textContent = "Copied!"; setTimeout(function() { btn.textContent = orig; }, 1800); }
+        }).catch(function() {});
+      } catch(e) {}
+    }
+    if (video) trackEvent("share", video);
+  };
+
+  /* ── Popup ── */
+  var isMuted = true, touchStartY = 0, touchStartX = 0, swipeHintShown = false;
+
+  function syncLikeBtn(bid) {
+    var video = allVideos[currentIndex]; if (!video) return;
+    var isLiked = !!likedVideos[video.id];
+    var btn = document.getElementById("nq-like-btn-" + bid);
+    var label = document.getElementById("nq-like-label-" + bid);
+    if (btn) btn.classList.toggle("nq-liked", isLiked);
+    if (label) label.textContent = isLiked ? "Liked" : "Like";
+  }
 
   window.nqOpenPopup = function(bid, index) {
     if (bid !== blockId) return;
+    try {
+      var stored = JSON.parse(localStorage.getItem("nq_likes") || "{}");
+      Object.keys(stored).forEach(function(k) { likedVideos[k] = true; });
+    } catch(e) {}
     currentIndex = index;
     showPopup(bid);
     var popup = document.getElementById("nq-popup-" + bid);
@@ -969,28 +1091,24 @@
   window.nqClosePopup = function(bid) {
     if (bid !== blockId) return;
     stopWatchTracking();
+    var vid = document.getElementById("nq-popup-video-" + bid);
+    if (vid) { vid.pause(); if (vid._nqEndedHandler) vid.removeEventListener("ended", vid._nqEndedHandler); }
     document.getElementById("nq-popup-" + bid).classList.remove("active", "nq-popup-mobile");
-    document.getElementById("nq-popup-video-" + bid).pause();
     document.body.style.overflow = "";
   };
 
   window.nqPrevVideo = function(bid) {
     if (bid !== blockId) return;
-    if (tileType === "hero_slide") {
-      var prev = (heroActiveIndex - 1 + allVideos.length) % allVideos.length;
-      heroSetActive(prev);
-    }
     currentIndex = (currentIndex - 1 + allVideos.length) % allVideos.length;
+    /* Keep hero in sync when popup navigates */
+    if (tileType === "hero_slide") heroSetActive(currentIndex);
     showPopup(bid);
   };
 
   window.nqNextVideo = function(bid) {
     if (bid !== blockId) return;
-    if (tileType === "hero_slide") {
-      var next = (heroActiveIndex + 1) % allVideos.length;
-      heroSetActive(next);
-    }
     currentIndex = (currentIndex + 1) % allVideos.length;
+    if (tileType === "hero_slide") heroSetActive(currentIndex);
     showPopup(bid);
   };
 
@@ -1002,8 +1120,8 @@
     if (b) b.innerHTML = isMuted ? "&#128263;" : "&#128266;";
   };
 
-  /* ── Analytics (unchanged) ── */
-  var TRACK = "https://queuniverse-shoppable.vercel.app/api/track";
+  /* ── Analytics ── */
+  var TRACK = "https://claura-shoppable.vercel.app/api/track";
 
   function trackEvent(type, video, value) {
     try {
@@ -1011,6 +1129,7 @@
       return fetch(url, { method: "GET", keepalive: true }).catch(function(){});
     } catch(e) { return Promise.resolve(); }
   }
+
   function trackView(video) {
     trackEvent("view", video);
     video.views = (video.views || 0) + 1;
@@ -1023,27 +1142,18 @@
     }
   }
 
-  var _watchInterval  = null;
-  var _watchStartTime = null;
-  var _watchLastTick  = null;
-  var _watchVideo     = null;
+  var _watchInterval = null, _watchStartTime = null, _watchLastTick = null, _watchVideo = null;
 
   function startWatchTracking(video) {
     stopWatchTracking();
-    _watchVideo     = video;
-    _watchStartTime = Date.now();
-    _watchLastTick  = Date.now();
-    _watchInterval  = setInterval(function() {
-      _watchLastTick = Date.now();
-      trackEvent("watch", video, 5);
-    }, 5000);
+    _watchVideo = video; _watchStartTime = Date.now(); _watchLastTick = Date.now();
+    _watchInterval = setInterval(function() { _watchLastTick = Date.now(); trackEvent("watch", video, 5); }, 5000);
   }
 
   function stopWatchTracking() {
     var p = Promise.resolve();
     if (_watchInterval) {
-      clearInterval(_watchInterval);
-      _watchInterval = null;
+      clearInterval(_watchInterval); _watchInterval = null;
       if (_watchVideo && _watchLastTick) {
         var partial = Math.floor((Date.now() - _watchLastTick) / 1000);
         if (partial > 0) { p = trackEvent("watch", _watchVideo, partial) || Promise.resolve(); }
@@ -1053,19 +1163,8 @@
     return p;
   }
 
-  window.nqTrackClick = function(el) {
-    try {
-      var vid = el.getAttribute("data-video-id"), sh = el.getAttribute("data-shop");
-      if (!vid || !sh) return;
-      fetch(TRACK + "?video_id=" + vid + "&shop=" + sh + "&event=click", { method: "GET", keepalive: true }).catch(function(){});
-      try { sessionStorage.setItem("nq_last_video", JSON.stringify({ id: vid, shop: sh, ts: Date.now() })); } catch(e) {}
-    } catch(e) {}
-  };
-
   window.nqSaveClickForAttribution = function(videoId, shopDomain) {
-    try {
-      localStorage.setItem("nq_last_click", JSON.stringify({ id: videoId, shop: shopDomain, ts: Date.now() }));
-    } catch(e) {}
+    try { localStorage.setItem("nq_last_click", JSON.stringify({ id: videoId, shop: shopDomain, ts: Date.now() })); } catch(e) {}
   };
 
   (function() {
@@ -1100,19 +1199,21 @@
   function preloadNextPopupVideo() {
     var nextIdx = (currentIndex + 1) % allVideos.length;
     var nextVideo = allVideos[nextIdx];
-    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) {
-      _preloadVid.src = nextVideo.r2_url;
-    }
+    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) _preloadVid.src = nextVideo.r2_url;
   }
 
   function showPopup(bid) {
     stopWatchTracking();
     var video = allVideos[currentIndex];
-    var vid   = document.getElementById("nq-popup-video-" + bid);
+    var vid = document.getElementById("nq-popup-video-" + bid);
+    if (vid._nqEndedHandler) { vid.removeEventListener("ended", vid._nqEndedHandler); vid._nqEndedHandler = null; }
     vid.src = video.r2_url;
     vid.play();
     trackView(video);
     startWatchTracking(video);
+    syncLikeBtn(bid);
+    vid._nqEndedHandler = function() { currentIndex = (currentIndex + 1) % allVideos.length; if (tileType === "hero_slide") heroSetActive(currentIndex); showPopup(bid); };
+    vid.addEventListener("ended", vid._nqEndedHandler);
     setTimeout(preloadNextPopupVideo, 500);
     var pd = document.getElementById("nq-popup-product-" + bid);
     pd.innerHTML = "";
@@ -1123,29 +1224,21 @@
 
   function renderPopupProduct(pd, p, video) {
     if (!p) return;
-    var priceHtml   = '&#8377;' + fmt(p.price);
+    var priceHtml = 'Rs. ' + fmt(p.price);
     var compareHtml = '';
-    if (p.compare_at_price && p.compare_at_price > p.price) {
-      compareHtml = '<span class="nq-popup-orig-price">&#8377;' + fmt(p.compare_at_price) + '</span>';
-    }
+    if (p.compare_at_price && p.compare_at_price > p.price)
+      compareHtml = '<span class="nq-popup-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span>';
     var videoId = video ? video.id : '';
     var card = document.createElement("div");
     card.className = "nq-popup-product-card";
-    if (p.image) {
-      var thumb = document.createElement("img");
-      thumb.src = p.image; thumb.className = "nq-popup-thumb";
-      card.appendChild(thumb);
-    }
+    if (p.image) { var thumb = document.createElement("img"); thumb.src = p.image; thumb.className = "nq-popup-thumb"; card.appendChild(thumb); }
     var info = document.createElement("div");
     info.className = "nq-popup-product-info";
-    info.innerHTML = '<p class="nq-popup-product-title">' + p.title + '</p>' +
-                     '<p class="nq-popup-product-price">' + priceHtml + ' ' + compareHtml + '</p>';
+    info.innerHTML = '<p class="nq-popup-product-title">' + p.title + '</p><p class="nq-popup-product-price">' + priceHtml + ' ' + compareHtml + '</p>';
     card.appendChild(info);
     pd.appendChild(card);
-
     var shopBtn = document.createElement("a");
-    shopBtn.href = "#"; shopBtn.className = "nq-popup-shop-btn";
-    shopBtn.style.background = btnColor; shopBtn.textContent = "SHOP NOW";
+    shopBtn.href = "#"; shopBtn.className = "nq-popup-shop-btn"; shopBtn.style.background = btnColor; shopBtn.textContent = "SHOP NOW";
     shopBtn.addEventListener("click", function(e) {
       e.preventDefault();
       if (shopBtn._nqClicking) return;
@@ -1157,8 +1250,7 @@
         try { sessionStorage.setItem("nq_last_video", JSON.stringify({ id: videoId, shop: shop, ts: Date.now() })); } catch(e2) {}
         clickPromise = trackEvent("click", video);
       } catch(err) { clickPromise = Promise.resolve(); }
-      var handle = p.handle;
-      var done = false;
+      var handle = p.handle, done = false;
       function go() { if (done) return; done = true; window.location.href = "/products/" + handle; }
       clickPromise.then(go).catch(go);
       setTimeout(go, 500);
@@ -1167,7 +1259,6 @@
   }
 
   init();
-
 })();
 </script>
 
@@ -1176,11 +1267,11 @@
 (function() {
   if (window._nqWarmInit) return;
   window._nqWarmInit = true;
-  var API  = "https://queuniverse-shoppable.vercel.app/api/videos";
+  var API  = "https://claura-shoppable.vercel.app/api/videos";
   var shop = "{{ shop.permanent_domain }}";
   var url  = API + "?shop=" + shop;
   var KEY  = "nq_v6_" + shop + "_home";
-  var TTL  = 10 * 60 * 1000;
+  var TTL  = 60 * 60 * 1000;
   function ping() {
     fetch(url, { keepalive: true })
       .then(function(r) { return r.json(); })
@@ -1195,13 +1286,12 @@
             var firstVid = data.videos[0];
             if (firstVid && firstVid.r2_url) {
               var vLink = document.querySelector('link[data-nq-keepwarm="1"]');
-              if (!vLink) { vLink = document.createElement("link"); vLink.rel = "preload"; vLink.as = "video"; vLink.setAttribute("data-nq-keepwarm","1"); document.head.appendChild(vLink); }
+              if (!vLink) { vLink = document.createElement("link"); vLink.rel = "preload"; vLink.as = "video"; vLink.setAttribute("data-nq-keepwarm", "1"); document.head.appendChild(vLink); }
               vLink.href = firstVid.r2_url;
             }
           } catch(e) {}
         } catch(e) {}
-      })
-      .catch(function() { setTimeout(ping, 20000); });
+      }).catch(function() { setTimeout(ping, 20000); });
   }
   ping();
   setInterval(ping, 4 * 60 * 1000);
@@ -1214,22 +1304,22 @@
   "name": "NQ Video Carousel",
   "target": "section",
   "settings": [
-    { "type": "text",  "id": "heading",              "label": "Heading",                          "default": "Watch And Buy" },
-    { "type": "range", "id": "heading_size_desktop",  "label": "Heading Font Size - Desktop (px)", "min": 20, "max": 80,  "step": 2, "default": 40 },
-    { "type": "range", "id": "heading_size_mobile",   "label": "Heading Font Size - Mobile (px)",  "min": 16, "max": 60,  "step": 2, "default": 28 },
-    { "type": "range", "id": "horizontal_padding",    "label": "Horizontal Padding (px)",          "min": 0,  "max": 100, "step": 4, "default": 40 },
-    { "type": "range", "id": "vertical_padding",      "label": "Vertical Padding (px)",            "min": 0,  "max": 100, "step": 4, "default": 20 },
-    { "type": "range", "id": "card_height",           "label": "Video Card Height (px)",           "min": 200, "max": 600, "step": 20, "default": 340 },
-    { "type": "range", "id": "card_width",            "label": "Video Card Width (px)",            "min": 120, "max": 400, "step": 10, "default": 200 },
+    { "type": "text",  "id": "heading",             "label": "Heading",                          "default": "Watch And Buy" },
+    { "type": "range", "id": "heading_size_desktop", "label": "Heading Font Size - Desktop (px)", "min": 20, "max": 80,  "step": 2, "default": 40 },
+    { "type": "range", "id": "heading_size_mobile",  "label": "Heading Font Size - Mobile (px)",  "min": 16, "max": 60,  "step": 2, "default": 28 },
+    { "type": "range", "id": "horizontal_padding",   "label": "Horizontal Padding (px)",          "min": 0,  "max": 100, "step": 4, "default": 40 },
+    { "type": "range", "id": "vertical_padding",     "label": "Vertical Padding (px)",            "min": 0,  "max": 100, "step": 4, "default": 20 },
+    { "type": "range", "id": "card_height",          "label": "Video Card Height (px)",           "min": 200, "max": 600, "step": 20, "default": 340 },
+    { "type": "range", "id": "card_width",           "label": "Video Card Width (px)",            "min": 120, "max": 400, "step": 10, "default": 200 },
     {
       "type": "select",
       "id": "show_on_device",
       "label": "Show On Device",
-      "info": "Control which devices this carousel section appears on",
+      "info": "Control which devices this video section is visible on",
       "options": [
-        { "value": "all",          "label": "All Devices" },
-        { "value": "desktop_only", "label": "Desktop Only" },
-        { "value": "mobile_only",  "label": "Mobile Only" }
+        { "value": "all",          "label": "All Devices"    },
+        { "value": "desktop_only", "label": "Desktop Only"   },
+        { "value": "mobile_only",  "label": "Mobile Only"    }
       ],
       "default": "all"
     },
@@ -1254,7 +1344,16 @@
       ],
       "default": "product_below_3"
     },
-    { "type": "color",    "id": "heading_color",  "label": "Heading Color",         "default": "#000000" },
+    { "type": "color", "id": "heading_color", "label": "Heading Color", "default": "#000000" },
+    {
+      "type": "select", "id": "heading_align", "label": "Heading Alignment",
+      "options": [
+        { "value": "left",   "label": "Left"   },
+        { "value": "center", "label": "Center" },
+        { "value": "right",  "label": "Right"  }
+      ],
+      "default": "left"
+    },
     { "type": "color",    "id": "shop_btn_color", "label": "Shop Now Button Color", "default": "#000000" },
     { "type": "checkbox", "id": "autoplay",       "label": "Autoplay on hover",     "default": true },
     { "type": "checkbox", "id": "show_views",     "label": "Show view count",       "default": true }
