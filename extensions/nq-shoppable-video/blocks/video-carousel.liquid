@@ -7,17 +7,12 @@
 
 {% comment %} ── Device Visibility ── {% endcomment %}
 {% assign show_device = block.settings.show_on_device %}
-
 <style>
-
+  /* Device visibility handled by JS below — CSS is fallback only */
   {% if show_device == 'desktop_only' %}
-    #nq-section-{{ block.id }} { display: block; }
     @media (max-width: 767px) { #nq-section-{{ block.id }} { display: none !important; } }
   {% elsif show_device == 'mobile_only' %}
-    #nq-section-{{ block.id }} { display: none; }
-    @media (max-width: 767px) { #nq-section-{{ block.id }} { display: block !important; } }
-  {% else %}
-    #nq-section-{{ block.id }} { display: block; }
+    @media (min-width: 768px) { #nq-section-{{ block.id }} { display: none !important; } }
   {% endif %}
 
   /* ════════════════════════════
@@ -198,8 +193,7 @@
     .nq-tile-type-hero_slide .nq-hero-strip-outer { display: none !important; }
     .nq-tile-type-hero_slide .nq-strip-nav        { display: none !important; }
   }
-
-  </style>
+</style>
 
 <div id="nq-section-{{ block.id }}"
      class="nq-section nq-tile-type-{{ block.settings.tile_type }}"
@@ -322,6 +316,17 @@
 
 <script>
 (function() {
+  /* ── Device visibility: hide immediately if wrong device ── */
+  (function() {
+    var showDevice = "{{ block.settings.show_on_device }}";
+    var isMobile   = window.innerWidth <= 767;
+    var sec        = document.getElementById("nq-section-{{ block.id }}");
+    if (!sec) return;
+    if (showDevice === "mobile_only"  && !isMobile) { sec.style.display = "none"; return; }
+    if (showDevice === "desktop_only" &&  isMobile) { sec.style.display = "none"; return; }
+    sec.style.display = "";
+  })();
+
   var shop     = "{{ shop.permanent_domain }}";
   var API      = "https://claura-shoppable.vercel.app/api/videos";
   var blockId  = "{{ block.id }}";
@@ -590,7 +595,7 @@
 
     /* Single video → full width, no peek; multiple → 92% with peek */
     var isSingle   = allVideos.length === 1;
-    var mobileH    = Math.round(window.innerHeight * 0.50); /* 50vh feels TikTok-like */
+    var mobileH    = Math.round(window.innerHeight * 0.50); /* 72vh feels TikTok-like */
     var cardWidth  = isSingle ? "100%" : "92%";
     var peekPad    = isSingle ? "0px"  : "28px";
     var snapGap    = isSingle ? "0px"  : "10px";
