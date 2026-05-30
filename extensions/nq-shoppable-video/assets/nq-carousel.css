@@ -728,7 +728,7 @@
     .nq-tile-type-hero_slide .nq-hero-main {
       flex: 0 0 92% !important;
       width: 92% !important;
-      height: 72vh !important;
+      height: 50vh !important;
       scroll-snap-align: start !important;
       border-radius: 16px !important;
     }
