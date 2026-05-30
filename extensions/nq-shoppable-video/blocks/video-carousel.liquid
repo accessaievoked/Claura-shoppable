@@ -210,10 +210,10 @@
     }
     .nq-hero-slide-wrap::-webkit-scrollbar { display: none; }
 
-    /* Each "slide" is 88% of viewport so next card peeks */
+    /* Each "slide" is 92% of viewport so next card peeks just a sliver */
     .nq-hero-main {
-      flex: 0 0 88% !important;
-      width: 88% !important;
+      flex: 0 0 92% !important;
+      width: 92% !important;
       min-width: 0 !important;
       scroll-snap-align: start !important;
       border-radius: 16px !important;
@@ -237,34 +237,14 @@
     }
   }
 
-  /* Dot indicators — hidden on desktop, flex on mobile */
-  .nq-hero-dots {
-    display: none;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-  }
-  .nq-hero-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #ccc;
-    transition: background 0.2s, transform 0.2s;
-    cursor: pointer;
-    border: none;
-    padding: 0;
-    flex-shrink: 0;
-  }
-  .nq-hero-dot.nq-dot-active {
-    background: #e02 !important;
-    transform: scale(1.35);
-  }
+  /* Dot indicators — HIDDEN everywhere */
+  .nq-hero-dots { display: none !important; }
+  .nq-hero-dot  { display: none !important; }
 
   /* Mobile swipe cards — injected into the main wrap */
   .nq-hero-swipe-card {
-    flex: 0 0 88%;
-    width: 88%;
+    flex: 0 0 92%;
+    width: 92%;
     min-width: 0;
     border-radius: 16px;
     overflow: hidden;
@@ -281,6 +261,15 @@
     height: 100%;
     object-fit: cover;
     display: block;
+  }
+  /* Inactive swipe card: dimmed + slightly scaled down */
+  .nq-hero-swipe-card {
+    transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  }
+  .nq-hero-swipe-card.nq-swipe-inactive {
+    opacity: 0.45;
+    transform: scale(0.94);
+    filter: brightness(0.6);
   }
   .nq-hero-swipe-card .nq-hero-product-bar {
     position: absolute;
@@ -648,7 +637,7 @@
     var heroMain = document.getElementById("nq-hero-main-" + blockId);
 
     /* Turn hero-slide-wrap into the swiper track */
-    wrap.style.cssText += ";display:flex;flex-direction:row;overflow-x:scroll;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:12px;scrollbar-width:none;padding-right:44px;";
+    wrap.style.cssText += ";display:flex;flex-direction:row;overflow-x:scroll;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;scrollbar-width:none;padding-right:28px;";
 
     /* Remove hero-main from normal flow — will be first swipe card */
     if (heroMain) heroMain.style.display = "none";
@@ -719,7 +708,10 @@
 
     /* IntersectionObserver: play video of visible card + update dot + lazy load */
     var swipeCards = wrap.querySelectorAll(".nq-hero-swipe-card");
-    var dotEls = document.querySelectorAll("#nq-hero-dots-" + blockId + " .nq-hero-dot");
+    /* dots hidden — no dot refs needed */
+
+    /* Mark all cards inactive initially */
+    swipeCards.forEach(function(c) { c.classList.add("nq-swipe-inactive"); });
 
     var playObs = new IntersectionObserver(function(entries) {
       entries.forEach(function(entry) {
@@ -730,15 +722,17 @@
         if (entry.isIntersecting) {
           currentIndex = cIdx;
           heroIndex    = cIdx;
-          /* Lazy load video */
+          /* Remove dim on active card */
+          card.classList.remove("nq-swipe-inactive");
+          /* Lazy load + play video */
           if (vid && !vid.src) {
             vid.src = allVideos[cIdx] ? allVideos[cIdx].r2_url : "";
             vid.load();
           }
           if (vid) { vid.play().catch(function(){}); if (poster) poster.style.opacity = "0"; }
-          /* Active dot */
-          dotEls.forEach(function(d, di) { d.classList.toggle("nq-dot-active", di === cIdx); });
         } else {
+          /* Dim inactive card */
+          card.classList.add("nq-swipe-inactive");
           if (vid) { vid.pause(); if (poster) poster.style.opacity = "1"; }
         }
       });
