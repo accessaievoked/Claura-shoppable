@@ -206,6 +206,11 @@
     document.head.appendChild(link);
   }
 
+  function nqHideSection() {
+    var sec = document.getElementById("nq-section-" + blockId);
+    if (sec) sec.style.display = "none";
+  }
+
   /* ════════════════════════════════════════════════════════════
      RENDER DISPATCHER
   ════════════════════════════════════════════════════════════ */
@@ -223,12 +228,7 @@
     if (!cont) return;
 
     if (!allVideos.length) {
-      if (productId) {
-        var sec = cont.closest(".nq-section");
-        if (sec) sec.style.display = "none";
-      } else {
-        cont.innerHTML = "<p class='nq-empty'>No videos found.</p>";
-      }
+      nqHideSection();
       return;
     }
 
@@ -272,7 +272,7 @@
     strip.innerHTML = "";
 
     if (!allVideos.length) {
-      if (wrap) wrap.style.display = "none";
+      nqHideSection();
       return;
     }
 
@@ -398,7 +398,7 @@
 
     /* Single video → full width, no peek; multiple → 92% with peek */
     var isSingle   = allVideos.length === 1;
-    var mobileH    = Math.round(window.innerHeight * 0.50); /* 50vh feels TikTok-like */
+    var mobileH    = Math.round(window.innerHeight * 0.72); /* 72vh feels TikTok-like */
     var cardWidth  = isSingle ? "100%" : "92%";
     var peekPad    = isSingle ? "0px"  : "28px";
     var snapGap    = isSingle ? "0px"  : "10px";
@@ -614,11 +614,34 @@
 
   function init() {
     rendered = false;
+
+    /* Hide section immediately if on a product page — show only when videos confirmed */
+    if (productId) {
+      var sec = document.getElementById("nq-section-" + blockId);
+      if (sec) sec.style.visibility = "hidden";
+    }
+
     prefetchAllProducts().then(function() {
       var cached = readCache();
       if (cached && cached.videos && cached.videos.length) {
+        /* Check if any cached videos match this product before showing */
+        var matching = filterVideos(cached.videos);
+        if (productId && !matching.length) {
+          nqHideSection();
+          doFetch(); /* still refresh in background */
+          return;
+        }
+        /* Re-show section — has matching videos */
+        var sec = document.getElementById("nq-section-" + blockId);
+        if (sec) sec.style.visibility = "";
         renderVideos(cached);
         rendered = true;
+      } else if (productId) {
+        /* No cache — keep hidden until fetch confirms videos exist */
+      } else {
+        /* Home page — show section, videos loading */
+        var sec = document.getElementById("nq-section-" + blockId);
+        if (sec) sec.style.visibility = "";
       }
       doFetch();
     });
@@ -645,8 +668,22 @@
         isFetching = false;
         if (giveUpTimer) { clearTimeout(giveUpTimer); giveUpTimer = null; }
         writeCache(data);
-        if (!rendered) { renderVideos(data); rendered = true; }
-        else { allVideos = filterVideos(data.videos || []); refreshViewCounters(); }
+        if (!rendered) {
+          /* On product pages: only show section if this product has videos */
+          var fetchedVideos = filterVideos(data.videos || []);
+          if (productId && !fetchedVideos.length) {
+            nqHideSection();
+          } else {
+            var sec = document.getElementById("nq-section-" + blockId);
+            if (sec) { sec.style.visibility = ""; sec.style.display = ""; }
+            renderVideos(data);
+          }
+          rendered = true;
+        } else {
+          allVideos = filterVideos(data.videos || []);
+          if (productId && !allVideos.length) { nqHideSection(); }
+          else { refreshViewCounters(); }
+        }
       })
       .catch(function(err) {
         isFetching = false;

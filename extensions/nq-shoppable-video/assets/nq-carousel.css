@@ -560,16 +560,19 @@
   /* ════════════════════════════
      HERO + SLIDE LAYOUT STYLES
   ════════════════════════════ */
+
+  /* Wrapper — desktop: flex row */
   .nq-hero-slide-wrap {
     display: flex;
+    flex-direction: row;
     gap: 12px;
     width: 100%;
-    overflow: hidden;
     position: relative;
     align-items: flex-start;
+    overflow: visible;
   }
 
-  /* ── Hero main card ── */
+  /* ── Hero main card (desktop) ── */
   .nq-hero-main {
     flex: 0 0 auto;
     width: clamp(240px, 55%, 420px);
@@ -582,18 +585,15 @@
     transition: box-shadow 0.2s;
   }
   .nq-hero-main:hover { box-shadow: 0 14px 44px rgba(0,0,0,0.32); }
-  .nq-hero-main video {
-    width: 100%;
-    display: block;
-    object-fit: cover;
-  }
-  /* Play icon — hidden always (video autoplays) */
+  .nq-hero-main video { width: 100%; display: block; object-fit: cover; }
+
+  /* Play icon — hidden (autoplay) */
   .nq-hero-play-icon { display: none !important; }
-  /* Product info bar below hero video */
+
+  /* Product badge */
   .nq-hero-product-bar {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 12px; right: 12px;
     z-index: 4;
     background: rgba(255,255,255,0.94);
     border-radius: 10px;
@@ -608,28 +608,16 @@
   }
   .nq-hero-product-bar:hover { background: #fff; }
   .nq-hero-product-bar img {
-    width: 32px;
-    height: 32px;
-    object-fit: cover;
-    border-radius: 5px;
-    flex-shrink: 0;
+    width: 32px; height: 32px;
+    object-fit: cover; border-radius: 5px; flex-shrink: 0;
   }
   .nq-hero-product-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: #222;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90px;
+    font-size: 11px; font-weight: 600; color: #222;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px;
   }
-  .nq-hero-product-price {
-    font-size: 11px;
-    color: #555;
-    white-space: nowrap;
-  }
+  .nq-hero-product-price { font-size: 11px; color: #555; white-space: nowrap; }
 
-  /* ── Side strip ── */
+  /* ── Side strip (desktop) ── */
   .nq-hero-strip-outer {
     flex: 1 1 0;
     min-width: 0;
@@ -649,6 +637,7 @@
     scrollbar-width: none;
   }
   .nq-hero-slide-strip::-webkit-scrollbar { display: none; }
+
   /* Side card */
   .nq-side-card {
     flex: 0 0 auto;
@@ -661,116 +650,39 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.12);
   }
   .nq-side-card:hover { transform: scale(1.03); box-shadow: 0 6px 22px rgba(0,0,0,0.22); }
-  .nq-side-card video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  /* Active ring */
+  .nq-side-card video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .nq-side-ring {
-    position: absolute;
-    inset: 0;
-    border-radius: 12px;
-    border: 3px solid transparent;
-    pointer-events: none;
-    z-index: 3;
+    position: absolute; inset: 0; border-radius: 12px;
+    border: 3px solid transparent; pointer-events: none; z-index: 3;
     transition: border-color 0.2s;
   }
   .nq-side-card.nq-side-active .nq-side-ring { border-color: #e02; }
   .nq-side-card .nq-views {
-    position: absolute;
-    bottom: 6px;
-    left: 8px;
-    font-size: 11px;
-    color: #fff;
-    background: rgba(0,0,0,0.45);
-    padding: 2px 6px;
-    border-radius: 20px;
-    z-index: 2;
+    position: absolute; bottom: 6px; left: 8px;
+    font-size: 11px; color: #fff;
+    background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 20px; z-index: 2;
   }
-  /* Strip nav arrows */
+
+  /* Strip nav */
   .nq-strip-nav {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 8px;
-    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; gap: 8px; flex-shrink: 0;
   }
   .nq-strip-nav button {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: none;
-    background: #ebebeb;
-    cursor: pointer;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #333;
-    transition: background 0.15s;
-    padding: 0;
-    line-height: 1;
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: #ebebeb; cursor: pointer; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: #333; transition: background 0.15s; padding: 0;
   }
   .nq-strip-nav button:hover { background: #d5d5d5; }
 
-  /* ── Mobile: full-width horizontal swiper ── */
-  @media (max-width: 767px) {
-    /* Wrap becomes a single full-width horizontal scroll container */
-    .nq-hero-slide-wrap {
-      flex-direction: row !important;
-      overflow-x: scroll !important;
-      overflow-y: hidden !important;
-      scroll-snap-type: x mandatory !important;
-      -webkit-overflow-scrolling: touch !important;
-      gap: 12px !important;
-      padding-right: 44px !important; /* peek of next card */
-      scrollbar-width: none !important;
-      width: 100% !important;
-      align-items: stretch !important;
-    }
-    .nq-hero-slide-wrap::-webkit-scrollbar { display: none; }
-
-    /* Each "slide" is 92% of viewport so next card peeks just a sliver */
-    .nq-hero-main {
-      flex: 0 0 92% !important;
-      width: 92% !important;
-      min-width: 0 !important;
-      scroll-snap-align: start !important;
-      border-radius: 16px !important;
-      height: 72vh !important;
-    }
-
-    /* Side strip becomes inline cards same size as hero */
-    .nq-hero-strip-outer {
-      flex: 0 0 88% !important;
-      width: 88% !important;
-      min-width: 0 !important;
-      height: auto !important;
-      overflow: visible !important;
-      scroll-snap-align: start !important;
-      display: none !important; /* hide strip — cards are in main swiper row below */
-    }
-    .nq-strip-nav { display: none !important; }
-
-    /* Dot indicators */
-    .nq-hero-dots {
-      display: flex !important;
-    }
-  }
-
-  /* Dot indicators — HIDDEN everywhere */
-  .nq-hero-dots { display: none !important; }
-  .nq-hero-dot  { display: none !important; }
-
-  /* Shimmer animation for hero placeholder */
+  /* Shimmer keyframe */
   @keyframes nqShimmer {
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
   }
 
-  /* Mobile swipe cards — injected into the main wrap */
+  /* ── Mobile swipe cards ── */
   .nq-hero-swipe-card {
     flex: 0 0 92%;
     width: 92%;
@@ -783,26 +695,43 @@
     cursor: pointer;
     box-shadow: 0 4px 18px rgba(0,0,0,0.18);
     flex-shrink: 0;
-    /* height is set by JS dynamically (72vh) */
+    transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
   .nq-hero-swipe-card img,
   .nq-hero-swipe-card video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  /* Inactive swipe card: dimmed + slightly scaled down */
-  .nq-hero-swipe-card {
-    transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+    width: 100%; height: 100%; object-fit: cover; display: block;
   }
   .nq-hero-swipe-card.nq-swipe-inactive {
     opacity: 0.45;
     transform: scale(0.94);
     filter: brightness(0.6);
   }
-  .nq-hero-swipe-card .nq-hero-product-bar {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+
+  /* Dot indicators — always hidden (removed feature) */
+  .nq-hero-dots { display: none !important; }
+
+  /* ── MOBILE OVERRIDES — scoped to hero_slide only ── */
+  @media (max-width: 767px) {
+    .nq-tile-type-hero_slide .nq-hero-slide-wrap {
+      flex-direction: row !important;
+      overflow-x: scroll !important;
+      overflow-y: hidden !important;
+      scroll-snap-type: x mandatory !important;
+      -webkit-overflow-scrolling: touch !important;
+      gap: 10px !important;
+      scrollbar-width: none !important;
+      width: 100% !important;
+      align-items: stretch !important;
+      padding-right: 28px !important;
+    }
+    .nq-tile-type-hero_slide .nq-hero-slide-wrap::-webkit-scrollbar { display: none; }
+    .nq-tile-type-hero_slide .nq-hero-main {
+      flex: 0 0 92% !important;
+      width: 92% !important;
+      height: 72vh !important;
+      scroll-snap-align: start !important;
+      border-radius: 16px !important;
+    }
+    .nq-tile-type-hero_slide .nq-hero-strip-outer { display: none !important; }
+    .nq-tile-type-hero_slide .nq-strip-nav        { display: none !important; }
   }
