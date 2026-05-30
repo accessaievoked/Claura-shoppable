@@ -546,7 +546,18 @@
 }
 
 
- /* ════════════════════════════
+
+  {% if show_device == 'desktop_only' %}
+    #nq-section-{{ block.id }} { display: block; }
+    @media (max-width: 767px) { #nq-section-{{ block.id }} { display: none !important; } }
+  {% elsif show_device == 'mobile_only' %}
+    #nq-section-{{ block.id }} { display: none; }
+    @media (max-width: 767px) { #nq-section-{{ block.id }} { display: block !important; } }
+  {% else %}
+    #nq-section-{{ block.id }} { display: block; }
+  {% endif %}
+
+  /* ════════════════════════════
      HERO + SLIDE LAYOUT STYLES
   ════════════════════════════ */
   .nq-hero-slide-wrap {

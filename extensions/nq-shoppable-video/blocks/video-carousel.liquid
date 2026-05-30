@@ -7,18 +7,7 @@
 
 {% comment %} ── Device Visibility ── {% endcomment %}
 {% assign show_device = block.settings.show_on_device %}
-<style>
-  {% if show_device == 'desktop_only' %}
-    #nq-section-{{ block.id }} { display: block; }
-    @media (max-width: 767px) { #nq-section-{{ block.id }} { display: none !important; } }
-  {% elsif show_device == 'mobile_only' %}
-    #nq-section-{{ block.id }} { display: none; }
-    @media (max-width: 767px) { #nq-section-{{ block.id }} { display: block !important; } }
-  {% else %}
-    #nq-section-{{ block.id }} { display: block; }
-  {% endif %}
 
- 
 
 <div id="nq-section-{{ block.id }}"
      class="nq-section nq-tile-type-{{ block.settings.tile_type }}"
