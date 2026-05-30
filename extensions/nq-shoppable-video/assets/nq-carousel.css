@@ -544,3 +544,254 @@
   .nq-action-icon { width: 40px; height: 40px; font-size: 18px; }
   .nq-action-btn.nq-liked .nq-action-icon::before { font-size: 18px; }
 }
+
+
+ /* ════════════════════════════
+     HERO + SLIDE LAYOUT STYLES
+  ════════════════════════════ */
+  .nq-hero-slide-wrap {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    align-items: flex-start;
+  }
+
+  /* ── Hero main card ── */
+  .nq-hero-main {
+    flex: 0 0 auto;
+    width: clamp(240px, 55%, 420px);
+    border-radius: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #f0f0f0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    position: relative;
+    transition: box-shadow 0.2s;
+  }
+  .nq-hero-main:hover { box-shadow: 0 14px 44px rgba(0,0,0,0.32); }
+  .nq-hero-main video {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+  }
+  /* Play icon — hidden always (video autoplays) */
+  .nq-hero-play-icon { display: none !important; }
+  /* Product info bar below hero video */
+  .nq-hero-product-bar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+    background: rgba(255,255,255,0.94);
+    border-radius: 10px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 160px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .nq-hero-product-bar:hover { background: #fff; }
+  .nq-hero-product-bar img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+  .nq-hero-product-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
+  }
+  .nq-hero-product-price {
+    font-size: 11px;
+    color: #555;
+    white-space: nowrap;
+  }
+
+  /* ── Side strip ── */
+  .nq-hero-strip-outer {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    gap: 6px;
+    overflow: hidden;
+    align-items: stretch;
+  }
+  .nq-hero-slide-strip {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+  .nq-hero-slide-strip::-webkit-scrollbar { display: none; }
+  /* Side card */
+  .nq-side-card {
+    flex: 0 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #111;
+    position: relative;
+    transition: transform 0.18s, box-shadow 0.18s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  }
+  .nq-side-card:hover { transform: scale(1.03); box-shadow: 0 6px 22px rgba(0,0,0,0.22); }
+  .nq-side-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* Active ring */
+  .nq-side-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    border: 3px solid transparent;
+    pointer-events: none;
+    z-index: 3;
+    transition: border-color 0.2s;
+  }
+  .nq-side-card.nq-side-active .nq-side-ring { border-color: #e02; }
+  .nq-side-card .nq-views {
+    position: absolute;
+    bottom: 6px;
+    left: 8px;
+    font-size: 11px;
+    color: #fff;
+    background: rgba(0,0,0,0.45);
+    padding: 2px 6px;
+    border-radius: 20px;
+    z-index: 2;
+  }
+  /* Strip nav arrows */
+  .nq-strip-nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .nq-strip-nav button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: #ebebeb;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    transition: background 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+  .nq-strip-nav button:hover { background: #d5d5d5; }
+
+  /* ── Mobile: full-width horizontal swiper ── */
+  @media (max-width: 767px) {
+    /* Wrap becomes a single full-width horizontal scroll container */
+    .nq-hero-slide-wrap {
+      flex-direction: row !important;
+      overflow-x: scroll !important;
+      overflow-y: hidden !important;
+      scroll-snap-type: x mandatory !important;
+      -webkit-overflow-scrolling: touch !important;
+      gap: 12px !important;
+      padding-right: 44px !important; /* peek of next card */
+      scrollbar-width: none !important;
+      width: 100% !important;
+      align-items: stretch !important;
+    }
+    .nq-hero-slide-wrap::-webkit-scrollbar { display: none; }
+
+    /* Each "slide" is 92% of viewport so next card peeks just a sliver */
+    .nq-hero-main {
+      flex: 0 0 92% !important;
+      width: 92% !important;
+      min-width: 0 !important;
+      scroll-snap-align: start !important;
+      border-radius: 16px !important;
+      height: 72vh !important;
+    }
+
+    /* Side strip becomes inline cards same size as hero */
+    .nq-hero-strip-outer {
+      flex: 0 0 88% !important;
+      width: 88% !important;
+      min-width: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
+      scroll-snap-align: start !important;
+      display: none !important; /* hide strip — cards are in main swiper row below */
+    }
+    .nq-strip-nav { display: none !important; }
+
+    /* Dot indicators */
+    .nq-hero-dots {
+      display: flex !important;
+    }
+  }
+
+  /* Dot indicators — HIDDEN everywhere */
+  .nq-hero-dots { display: none !important; }
+  .nq-hero-dot  { display: none !important; }
+
+  /* Shimmer animation for hero placeholder */
+  @keyframes nqShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Mobile swipe cards — injected into the main wrap */
+  .nq-hero-swipe-card {
+    flex: 0 0 92%;
+    width: 92%;
+    min-width: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    background: #111;
+    scroll-snap-align: start;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    flex-shrink: 0;
+    /* height is set by JS dynamically (72vh) */
+  }
+  .nq-hero-swipe-card img,
+  .nq-hero-swipe-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* Inactive swipe card: dimmed + slightly scaled down */
+  .nq-hero-swipe-card {
+    transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  }
+  .nq-hero-swipe-card.nq-swipe-inactive {
+    opacity: 0.45;
+    transform: scale(0.94);
+    filter: brightness(0.6);
+  }
+  .nq-hero-swipe-card .nq-hero-product-bar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
