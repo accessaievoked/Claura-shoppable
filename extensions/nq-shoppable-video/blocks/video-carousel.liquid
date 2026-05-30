@@ -398,7 +398,7 @@
 
     /* Single video → full width, no peek; multiple → 92% with peek */
     var isSingle   = allVideos.length === 1;
-    var mobileH    = Math.round(window.innerHeight * 0.72); /* 72vh feels TikTok-like */
+    var mobileH    = Math.round(window.innerHeight * 0.50); /* 50vh feels TikTok-like */
     var cardWidth  = isSingle ? "100%" : "92%";
     var peekPad    = isSingle ? "0px"  : "28px";
     var snapGap    = isSingle ? "0px"  : "10px";
