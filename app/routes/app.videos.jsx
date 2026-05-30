@@ -1,4 +1,4 @@
-import { useLoaderData, Form, useNavigation, useNavigate, useFetcher, useRouteError } from "react-router";
+import { useLoaderData, Form, useNavigation, useNavigate, useFetcher, useRouteError, useRevalidator } from "react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -101,6 +101,7 @@ export default function Videos() {
   const { videos, products } = useLoaderData();
   const navigation = useNavigation();
   const fetcher = useFetcher();
+  const revalidator = useRevalidator();
 
   /* Import modal state */
   const [showImport, setShowImport] = useState(false);
@@ -119,7 +120,7 @@ export default function Videos() {
     vid.playsInline = true;
     vid.preload = "metadata";
     vid.onloadeddata = () => {
-      vid.currentTime = 0.1; // seek slightly in to avoid pure black frames
+      vid.currentTime = 0.1;
     };
     vid.onseeked = () => {
       const canvas = document.createElement("canvas");
@@ -144,7 +145,6 @@ export default function Videos() {
     const blob = await extractFrame(file);
     if (blob) {
       setThumbPreview(URL.createObjectURL(blob));
-      // Store blob in a DataTransfer so we can attach it to a hidden input
       const dt = new DataTransfer();
       dt.items.add(new File([blob], "thumbnail.jpg", { type: "image/jpeg" }));
       if (thumbnailInputRef.current) thumbnailInputRef.current.files = dt.files;
@@ -227,12 +227,14 @@ export default function Videos() {
       const confirmRes = await fetch("/api/upload", { method: "POST", body: confirmForm });
       const { ok, error: confirmErr } = await confirmRes.json();
       if (confirmErr) throw new Error(confirmErr);
+
       setUploadProgress(100);
       setShowImport(false);
       setSelectedFile(null);
+      setThumbPreview(null);
       setUploadProgress(0);
-      // Refresh the page to show new video
-      window.location.reload();
+      // Revalidate loaders to show new video without breaking App Bridge session
+      revalidator.revalidate();
     } catch (err) {
       setUploadError(err.message);
     } finally {
@@ -296,11 +298,14 @@ export default function Videos() {
       const confirmRes = await fetch("/api/upload", { method: "POST", body: confirmForm });
       const { error: confirmErr } = await confirmRes.json();
       if (confirmErr) throw new Error(confirmErr);
+
       setUrlUploadProgress(100);
       setShowImport(false);
       setUrlValue("");
+      setThumbPreview(null);
       setUrlUploadProgress(0);
-      window.location.reload();
+      // Revalidate loaders to show new video without breaking App Bridge session
+      revalidator.revalidate();
     } catch (err) {
       setUrlUploadError(err.message);
     } finally {
