@@ -48,14 +48,7 @@
     display: block;
     object-fit: cover;
   }
-  .nq-hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 52%);
-    pointer-events: none;
-    z-index: 1;
-  }
-  /* Play icon — hides on hover/playing */
+  /* Play icon — hides when video is playing */
   .nq-hero-play-icon {
     position: absolute;
     top: 50%;
@@ -74,36 +67,6 @@
   }
   .nq-hero-main:hover .nq-hero-play-icon,
   .nq-hero-main.nq-hero-playing .nq-hero-play-icon { opacity: 0; }
-  /* Creator bar at bottom of hero */
-  .nq-hero-creator {
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 2;
-  }
-  .nq-hero-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    object-fit: cover;
-    background: #555;
-    flex-shrink: 0;
-  }
-  .nq-hero-creator-info { color: #fff; line-height: 1.3; min-width: 0; }
-  .nq-hero-creator-name {
-    font-weight: 700;
-    font-size: 15px;
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .nq-hero-creator-meta { font-size: 12px; opacity: 0.82; display: block; }
   /* Product info bar below hero video */
   .nq-hero-product-bar {
     position: absolute;
@@ -151,12 +114,13 @@
     display: flex;
     gap: 6px;
     overflow: hidden;
+    align-items: stretch;
   }
   .nq-hero-slide-strip {
     flex: 1 1 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     overflow-y: auto;
     overflow-x: hidden;
     scroll-behavior: smooth;
@@ -261,32 +225,23 @@
         <video id="nq-hero-video-{{ block.id }}"
                autoplay muted loop playsinline
                style="height:{{ block.settings.card_height }}px;"></video>
-        <div class="nq-hero-overlay"></div>
         <div class="nq-hero-play-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <polygon points="5,3 19,12 5,21" fill="#e02"/>
           </svg>
         </div>
-        <!-- Product badge (top-right) -->
+        <!-- Product badge (top-right only) -->
         <div class="nq-hero-product-bar" id="nq-hero-product-{{ block.id }}" style="display:none;"></div>
-        <!-- Creator bar (bottom) -->
-        <div class="nq-hero-creator" id="nq-hero-creator-{{ block.id }}">
-          <img class="nq-hero-avatar" id="nq-hero-avatar-{{ block.id }}" src="" alt="" style="display:none;">
-          <div class="nq-hero-creator-info">
-            <span class="nq-hero-creator-name" id="nq-hero-name-{{ block.id }}"></span>
-            <span class="nq-hero-creator-meta" id="nq-hero-meta-{{ block.id }}"></span>
-          </div>
-        </div>
       </div>
 
       <!-- Side strip + nav -->
-      <div class="nq-hero-strip-outer">
+      <div class="nq-hero-strip-outer" style="height:{{ block.settings.card_height }}px;">
         <div class="nq-hero-slide-strip" id="nq-carousel-{{ block.id }}"
-             style="max-height:{{ block.settings.card_height }}px;">
+             style="height:{{ block.settings.card_height }}px; max-height:{{ block.settings.card_height }}px;">
           <!-- Side cards injected by JS -->
-          {%- for i in (1..5) -%}
+          {%- for i in (1..4) -%}
             <div class="nq-skeleton nq-skeleton-card"
-                 style="width:100%;height:{{ block.settings.card_height | divided_by: 3 }}px;flex-shrink:0;"></div>
+                 style="width:100%;height:{{ block.settings.card_height | divided_by: 3 }}px;flex-shrink:0;border-radius:10px;"></div>
           {%- endfor -%}
         </div>
         <div class="nq-strip-nav">
@@ -518,7 +473,7 @@
       allVideos.forEach(function(video, i) {
         var card = document.createElement("div");
         card.className = "nq-side-card" + (i === 0 ? " nq-side-active" : "");
-        var sideH = Math.round(cardH * 0.30);
+        var sideH = Math.round((cardH - 16) / 3);
         card.style.cssText = "height:" + sideH + "px;";
 
         /* Active ring */
@@ -557,7 +512,7 @@
       /* Strip scroll nav */
       var upBtn = document.getElementById("nq-strip-up-" + blockId);
       var dnBtn = document.getElementById("nq-strip-dn-" + blockId);
-      var scrollAmt = Math.round(cardH * 0.30) + 10;
+      var scrollAmt = Math.round((cardH - 16) / 3) + 8;
       if (upBtn) upBtn.onclick = function() { strip.scrollBy({ top: -scrollAmt, behavior: "smooth" }); };
       if (dnBtn) dnBtn.onclick = function() { strip.scrollBy({ top:  scrollAmt, behavior: "smooth" }); };
 
@@ -580,34 +535,14 @@
     if (!video) return;
 
     /* ── Update hero video ── */
-    var heroVid = document.getElementById("nq-hero-video-" + blockId);
-    var heroMain = document.getElementById("nq-hero-main-" + blockId);
+    var heroVid  = document.getElementById("nq-hero-video-" + blockId);
+    var heroMain = document.getElementById("nq-hero-main-"  + blockId);
     if (heroVid) {
       heroVid.src = video.r2_url;
       heroVid.load();
       heroVid.play().then(function() {
         if (heroMain) heroMain.classList.add("nq-hero-playing");
       }).catch(function() {});
-      heroVid.onended = null; /* loop attr handles it */
-    }
-
-    /* ── Creator bar ── */
-    var nameEl   = document.getElementById("nq-hero-name-"    + blockId);
-    var metaEl   = document.getElementById("nq-hero-meta-"    + blockId);
-    var avatarEl = document.getElementById("nq-hero-avatar-"  + blockId);
-    if (nameEl)   nameEl.textContent   = video.creator_name || video.title || "";
-    if (metaEl)   metaEl.textContent   =
-        (video.followers ? video.followers + " followers" : "") +
-        (video.followers && video.likes ? " | " : "") +
-        (video.likes     ? video.likes  + " likes"       : "");
-    if (avatarEl) {
-      var avatarSrc = video.creator_avatar || video.thumbnail_url || "";
-      if (avatarSrc) {
-        avatarEl.src = avatarSrc;
-        avatarEl.style.display = "block";
-      } else {
-        avatarEl.style.display = "none";
-      }
     }
 
     /* ── Product badge ── */
