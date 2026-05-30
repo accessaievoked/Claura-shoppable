@@ -37,7 +37,7 @@
     border-radius: 18px;
     overflow: hidden;
     cursor: pointer;
-    background: #111;
+    background: #f0f0f0;
     box-shadow: 0 8px 32px rgba(0,0,0,0.22);
     position: relative;
     transition: box-shadow 0.2s;
@@ -48,25 +48,8 @@
     display: block;
     object-fit: cover;
   }
-  /* Play icon — hides when video is playing */
-  .nq-hero-play-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.88);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    z-index: 3;
-    transition: opacity 0.25s;
-  }
-  .nq-hero-main:hover .nq-hero-play-icon,
-  .nq-hero-main.nq-hero-playing .nq-hero-play-icon { opacity: 0; }
+  /* Play icon — hidden always (video autoplays) */
+  .nq-hero-play-icon { display: none !important; }
   /* Product info bar below hero video */
   .nq-hero-product-bar {
     position: absolute;
@@ -241,6 +224,12 @@
   .nq-hero-dots { display: none !important; }
   .nq-hero-dot  { display: none !important; }
 
+  /* Shimmer animation for hero placeholder */
+  @keyframes nqShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
   /* Mobile swipe cards — injected into the main wrap */
   .nq-hero-swipe-card {
     flex: 0 0 92%;
@@ -296,16 +285,13 @@
       <!-- Hero main card -->
       <div class="nq-hero-main" id="nq-hero-main-{{ block.id }}"
            style="height:{{ block.settings.card_height }}px;">
+        <!-- Shimmer placeholder — visible until video plays -->
+        <div id="nq-hero-shimmer-{{ block.id }}" style="position:absolute;inset:0;z-index:10;background:linear-gradient(135deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:nqShimmer 1.4s infinite linear;"></div>
         <video id="nq-hero-video-{{ block.id }}"
                autoplay muted loop playsinline
-               style="height:{{ block.settings.card_height }}px;"></video>
-        <div class="nq-hero-play-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <polygon points="5,3 19,12 5,21" fill="#e02"/>
-          </svg>
-        </div>
+               style="height:{{ block.settings.card_height }}px;position:relative;z-index:11;opacity:0;transition:opacity 0.4s;"></video>
         <!-- Product badge (top-right only) -->
-        <div class="nq-hero-product-bar" id="nq-hero-product-{{ block.id }}" style="display:none;"></div>
+        <div class="nq-hero-product-bar" id="nq-hero-product-{{ block.id }}" style="display:none;z-index:12;"></div>
       </div>
 
       <!-- Side strip + nav -->
@@ -524,6 +510,13 @@
   /* ════════════════════════════════════════════════════════════
      HERO + SLIDE RENDERER
   ════════════════════════════════════════════════════════════ */
+  function nqHeroShowVideo(blockId) {
+    var shimmer = document.getElementById("nq-hero-shimmer-" + blockId);
+    var vid     = document.getElementById("nq-hero-video-"   + blockId);
+    if (shimmer) shimmer.style.display = "none";
+    if (vid)     vid.style.opacity     = "1";
+  }
+
   function isMobileView() { return window.innerWidth <= 767; }
 
   function renderHeroSlide() {
@@ -553,6 +546,11 @@
         heroVidEarly.src = allVideos[0].r2_url;
         heroVidEarly.load();
         heroVidEarly.play().catch(function(){});
+      heroVidEarly.addEventListener("playing", function() { nqHeroShowVideo(blockId); }, { once: true });
+      heroVidEarly.addEventListener("loadeddata", function() {
+        heroVidEarly.play().catch(function(){});
+        nqHeroShowVideo(blockId);
+      }, { once: true });
       }
     }
 
@@ -814,7 +812,9 @@
       heroVid.load();
       heroVid.play().then(function() {
         if (heroMain) heroMain.classList.add("nq-hero-playing");
+        nqHeroShowVideo(blockId);
       }).catch(function() {});
+      heroVid.addEventListener("loadeddata", function() { nqHeroShowVideo(blockId); }, { once: true });
     }
 
     /* ── Product badge ── */
