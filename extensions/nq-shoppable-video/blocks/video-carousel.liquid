@@ -546,6 +546,16 @@
       return getVideoProduct(v).catch(function() { return null; });
     });
 
+    /* Preload first video at highest browser priority immediately */
+    if (allVideos[0] && allVideos[0].r2_url) {
+      var heroVidEarly = document.getElementById("nq-hero-video-" + blockId);
+      if (heroVidEarly && !heroVidEarly.src) {
+        heroVidEarly.src = allVideos[0].r2_url;
+        heroVidEarly.load();
+        heroVidEarly.play().catch(function(){});
+      }
+    }
+
     Promise.all(fetches).then(function(products) {
       heroProducts = products;
 
@@ -561,6 +571,16 @@
   function buildDesktopHero(strip, products) {
     strip.innerHTML = "";
     var sideH = Math.round((cardH - 16) / 3);
+
+    /* Play hero video immediately — don't wait for side cards to build */
+    var heroVidEl = document.getElementById("nq-hero-video-" + blockId);
+    if (heroVidEl && allVideos[0] && allVideos[0].r2_url && !heroVidEl.src) {
+      heroVidEl.src = allVideos[0].r2_url;
+      heroVidEl.load();
+      heroVidEl.play().catch(function(){});
+      var heroMain = document.getElementById("nq-hero-main-" + blockId);
+      if (heroMain) heroMain.classList.add("nq-hero-playing");
+    }
 
     allVideos.forEach(function(video, i) {
       (function(idx, v) {
@@ -705,6 +725,23 @@
 
     /* Build dot indicators */
     buildDots(allVideos.length);
+
+    /* Immediately load + play the first swipe card — no black screen */
+    var firstSwipeCard = wrap.querySelector('.nq-hero-swipe-card[data-nq-idx="0"]');
+    if (firstSwipeCard) {
+      firstSwipeCard.classList.remove("nq-swipe-inactive");
+      var firstVid = firstSwipeCard.querySelector("video");
+      var firstPoster = firstSwipeCard.querySelector("img[data-nq-poster]");
+      if (firstVid && allVideos[0] && allVideos[0].r2_url) {
+        firstVid.src = allVideos[0].r2_url;
+        firstVid.load();
+        firstVid.play().then(function() {
+          if (firstPoster) firstPoster.style.opacity = "0";
+        }).catch(function() {
+          /* autoplay blocked — poster stays visible, user tap will start it */
+        });
+      }
+    }
 
     /* IntersectionObserver: play video of visible card + update dot + lazy load */
     var swipeCards = wrap.querySelectorAll(".nq-hero-swipe-card");
