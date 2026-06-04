@@ -203,6 +203,13 @@
       style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }}; text-align: {{ block.settings.heading_align }};">
     {{ block.settings.heading }}
   </h2>
+  {% if block.settings.subheading != blank %}
+  <p class="nq-subheading"
+     style="color: {{ block.settings.heading_color }}; text-align: {{ block.settings.heading_align }}; margin: -8px 0 12px; font-size: 15px; opacity: 0.7; line-height: 1.5;">
+    {{ block.settings.subheading }}
+  </p>
+{% endif %}
+
 
   {% assign tt = block.settings.tile_type %}
 
@@ -1492,6 +1499,7 @@
   "target": "section",
   "settings": [
     { "type": "text",  "id": "heading",             "label": "Heading",                          "default": "Watch And Buy" },
+    { "type": "textarea", "id": "subheading", "label": "Paragraph / Subheading", "default": "" },
     { "type": "range", "id": "heading_size_desktop", "label": "Heading Font Size - Desktop (px)", "min": 20, "max": 80,  "step": 2, "default": 40 },
     { "type": "range", "id": "heading_size_mobile",  "label": "Heading Font Size - Mobile (px)",  "min": 16, "max": 60,  "step": 2, "default": 28 },
     { "type": "range", "id": "horizontal_padding",   "label": "Horizontal Padding (px)",          "min": 0,  "max": 100, "step": 4, "default": 40 },
