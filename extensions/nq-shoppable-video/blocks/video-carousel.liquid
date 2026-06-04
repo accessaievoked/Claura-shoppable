@@ -205,7 +205,7 @@
   </h2>
   {% if block.settings.subheading != blank %}
   <p class="nq-subheading"
-     style="color: {{ block.settings.heading_color }}; text-align: {{ block.settings.heading_align }}; margin: -8px 0 12px; font-size: 15px; opacity: 0.7; line-height: 1.5;">
+     style="color: {{ block.settings.subheading_color }}; text-align: {{ block.settings.heading_align }}; margin: -8px 0 12px; font-size: 15px; opacity: 0.7; line-height: 1.5;">
     {{ block.settings.subheading }}
   </p>
 {% endif %}
@@ -1540,6 +1540,7 @@
       "default": "product_below_3"
     },
     { "type": "color", "id": "heading_color", "label": "Heading Color", "default": "#000000" },
+    { "type": "color", "id": "subheading_color", "label": "Subheading Color", "default": "#000000" },
     {
       "type": "select", "id": "heading_align", "label": "Heading Alignment",
       "options": [
