@@ -286,7 +286,13 @@
     </div>
   {% endif %}
 
-  
+    {% comment %} ── Subheading below video ── {% endcomment %}
+  {% if block.settings.subheading != blank %}
+  <p class="nq-subheading"
+     style="color: {{ block.settings.subheading_color }}; text-align: {{ block.settings.heading_align }}; margin: 12px 0 0; font-size: 15px; opacity: 0.7; line-height: 1.5;">
+    {{ block.settings.subheading }}
+  </p>
+  {% endif %}
 
 </div>
 
