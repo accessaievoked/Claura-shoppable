@@ -203,12 +203,7 @@
       style="font-size: {{ block.settings.heading_size_desktop }}px; color: {{ block.settings.heading_color }}; text-align: {{ block.settings.heading_align }};">
     {{ block.settings.heading }}
   </h2>
-  {% if block.settings.subheading != blank %}
-  <p class="nq-subheading"
-     style="color: {{ block.settings.subheading_color }}; text-align: {{ block.settings.heading_align }}; margin: -8px 0 12px; font-size: 15px; opacity: 0.7; line-height: 1.5;">
-    {{ block.settings.subheading }}
-  </p>
-{% endif %}
+ 
 
 
   {% assign tt = block.settings.tile_type %}
@@ -289,6 +284,14 @@
     <div class="nq-view-more-wrap">
       <button class="nq-view-more-btn">VIEW MORE &#8964;</button>
     </div>
+  {% endif %}
+
+    {% comment %} ── Subheading below video ── {% endcomment %}
+  {% if block.settings.subheading != blank %}
+  <p class="nq-subheading"
+     style="color: {{ block.settings.subheading_color }}; text-align: {{ block.settings.heading_align }}; margin: 12px 0 0; font-size: 15px; opacity: 0.7; line-height: 1.5;">
+    {{ block.settings.subheading }}
+  </p>
   {% endif %}
 
 </div>
