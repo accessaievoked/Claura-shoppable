@@ -431,6 +431,38 @@
   var heroIndex = 0;
   var heroProducts = []; /* pre-fetched product per video index */
 
+  /* ── HLS.js lazy loader (loaded once, cached) ── */
+  var _hlsLib = null; var _hlsLoading = false; var _hlsCbs = [];
+  function nqLoadHls(cb) {
+    if (_hlsLib) { cb(_hlsLib); return; }
+    _hlsCbs.push(cb);
+    if (_hlsLoading) return;
+    _hlsLoading = true;
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+    s.onload = function() { _hlsLib = window.Hls; _hlsLoading = false; _hlsCbs.forEach(function(fn) { fn(_hlsLib); }); _hlsCbs = []; };
+    s.onerror = function() { _hlsLoading = false; _hlsCbs.forEach(function(fn) { fn(null); }); _hlsCbs = []; };
+    document.head.appendChild(s);
+  }
+
+  /* ── Attach a video URL to a <video> element, using HLS.js when needed ── */
+  function nqAttachVideo(vid, url) {
+    if (!url || vid._nqUrl === url) return;
+    vid._nqUrl = url;
+    if (vid._hls) { vid._hls.destroy(); vid._hls = null; }
+    var isHls = url.indexOf(".m3u8") !== -1;
+    if (!isHls) { vid.src = url; vid.load(); return; }
+    /* Safari / iOS support native HLS */
+    if (vid.canPlayType && vid.canPlayType("application/vnd.apple.mpegurl")) {
+      vid.src = url; vid.load(); return;
+    }
+    nqLoadHls(function(Hls) {
+      if (!Hls || !Hls.isSupported()) { vid.src = url; vid.load(); return; }
+      var hls = new Hls({ enableWorker: false });
+      hls.loadSource(url); hls.attachMedia(vid); vid._hls = hls;
+    });
+  }
+
   var productId = null;
   {% if product %}
   productId = "{{ product.id }}";
@@ -501,7 +533,7 @@
   function renderVideos(data) {
     var raw = (data && data.videos) ? data.videos : [];
     allVideos = filterVideos(raw);
-    if (allVideos.length) preloadFirstVideoLink(allVideos[0].r2_url);
+    if (allVideos.length) preloadFirstVideoLink(allVideos[0].stream_url || allVideos[0].r2_url);
 
     if (tileType === "hero_slide") {
       renderHeroSlide();
@@ -568,9 +600,8 @@
     /* Preload first video at highest browser priority immediately */
     if (allVideos[0] && allVideos[0].r2_url) {
       var heroVidEarly = document.getElementById("nq-hero-video-" + blockId);
-      if (heroVidEarly && !heroVidEarly.src) {
-        heroVidEarly.src = allVideos[0].r2_url;
-        heroVidEarly.load();
+      if (heroVidEarly && !heroVidEarly._nqUrl) {
+        nqAttachVideo(heroVidEarly, allVideos[0].r2_url);
         heroVidEarly.play().catch(function(){});
       heroVidEarly.addEventListener("playing", function() { nqHeroShowVideo(blockId); }, { once: true });
       heroVidEarly.addEventListener("loadeddata", function() {
@@ -598,9 +629,8 @@
 
     /* Play hero video immediately — don't wait for side cards to build */
     var heroVidEl = document.getElementById("nq-hero-video-" + blockId);
-    if (heroVidEl && allVideos[0] && allVideos[0].r2_url && !heroVidEl.src) {
-      heroVidEl.src = allVideos[0].r2_url;
-      heroVidEl.load();
+    if (heroVidEl && allVideos[0] && (allVideos[0].stream_url || allVideos[0].r2_url) && !heroVidEl._nqUrl) {
+      nqAttachVideo(heroVidEl, allVideos[0].stream_url || allVideos[0].r2_url);
       heroVidEl.play().catch(function(){});
       var heroMain = document.getElementById("nq-hero-main-" + blockId);
       if (heroMain) heroMain.classList.add("nq-hero-playing");
@@ -646,7 +676,7 @@
         card.appendChild(num);
 
         card.addEventListener("mouseenter", function() {
-          if (!vid.src) { vid.src = v.r2_url; vid.load(); }
+          nqAttachVideo(vid, v.stream_url || v.r2_url);
           vid.play().catch(function(){});
           vid.style.opacity = "1";
         });
@@ -768,10 +798,9 @@
     if (firstSwipeCard) {
       firstSwipeCard.classList.remove("nq-swipe-inactive");
       var firstVid = firstSwipeCard.querySelector("video");
-      if (firstVid && allVideos[0] && allVideos[0].r2_url) {
-        firstVid.src = allVideos[0].r2_url;
+      if (firstVid && allVideos[0] && (allVideos[0].stream_url || allVideos[0].r2_url)) {
         firstVid.preload = "auto";
-        firstVid.load();
+        nqAttachVideo(firstVid, allVideos[0].stream_url || allVideos[0].r2_url);
         firstVid.play().catch(function() {});
         /* Mark ready once video can play */
         var markFirstReady = function() {
@@ -800,9 +829,8 @@
           card.classList.remove("nq-swipe-inactive");
 
           /* Load current video if not already loaded */
-          if (vid && !vid.src && allVideos[cIdx] && allVideos[cIdx].r2_url) {
-            vid.src = allVideos[cIdx].r2_url;
-            vid.load();
+          if (vid && !vid._nqUrl && allVideos[cIdx] && (allVideos[cIdx].stream_url || allVideos[cIdx].r2_url)) {
+            nqAttachVideo(vid, allVideos[cIdx].stream_url || allVideos[cIdx].r2_url);
 
             /* Mark ready once video can play */
             var markReady = function() {
@@ -823,9 +851,9 @@
               var preloadCard = wrap.querySelector('.nq-hero-swipe-card[data-nq-idx="' + preloadIdx + '"]');
               if (preloadCard) {
                 var preloadVid = preloadCard.querySelector("video");
-                if (preloadVid && !preloadVid.src && allVideos[preloadIdx] && allVideos[preloadIdx].r2_url) {
-                  preloadVid.src = allVideos[preloadIdx].r2_url;
+                if (preloadVid && !preloadVid._nqUrl && allVideos[preloadIdx] && (allVideos[preloadIdx].stream_url || allVideos[preloadIdx].r2_url)) {
                   preloadVid.preload = "auto";
+                  nqAttachVideo(preloadVid, allVideos[preloadIdx].stream_url || allVideos[preloadIdx].r2_url);
                   /* Setup ready handlers for preload too */
                   preloadVid.oncanplay = function() { preloadCard.classList.add("nq-video-ready"); };
                   preloadVid.onloadeddata = function() { preloadCard.classList.add("nq-video-ready"); };
@@ -879,8 +907,7 @@
     var heroVid  = document.getElementById("nq-hero-video-" + blockId);
     var heroMain = document.getElementById("nq-hero-main-"  + blockId);
     if (heroVid) {
-      heroVid.src = video.r2_url;
-      heroVid.load();
+      nqAttachVideo(heroVid, video.stream_url || video.r2_url);
       heroVid.play().then(function() {
         if (heroMain) heroMain.classList.add("nq-hero-playing");
         nqHeroShowVideo(blockId);
@@ -1055,10 +1082,11 @@
     videoEl.muted = true; videoEl.loop = true; videoEl.playsInline = true;
     videoEl.className = "nq-video-el";
     if (video.thumbnail_url) videoEl.poster = video.thumbnail_url;
-    videoEl.dataset.src = video.r2_url;
+    var videoUrl = video.stream_url || video.r2_url;
+    videoEl.dataset.src = videoUrl;
 
-    if (index < 3) { videoEl.preload = "auto"; videoEl.src = video.r2_url; }
-    else if (index < 6) { videoEl.preload = "metadata"; videoEl.src = video.r2_url; }
+    if (index < 3) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoUrl); }
+    else if (index < 6) { videoEl.preload = "metadata"; nqAttachVideo(videoEl, videoUrl); }
     else { videoEl.preload = "none"; }
 
     card.onclick = function() { nqOpenPopup(blockId, index); };
@@ -1068,7 +1096,7 @@
         new IntersectionObserver(function(entries, obs) {
           entries.forEach(function(e) {
             if (e.isIntersecting) {
-              if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
+              if (videoEl.dataset.src && !videoEl._nqUrl) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoEl.dataset.src); }
               obs.unobserve(e.target);
             }
           });
@@ -1077,13 +1105,13 @@
       new IntersectionObserver(function(entries) {
         entries.forEach(function(e) {
           if (e.isIntersecting) {
-            if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
+            if (videoEl.dataset.src && !videoEl._nqUrl) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoEl.dataset.src); }
             videoEl.play().catch(function(){});
           } else { videoEl.pause(); }
         });
       }, { threshold: 0.3 }).observe(card);
     } else {
-      videoEl.src = video.r2_url;
+      nqAttachVideo(videoEl, video.r2_url);
       card.onmouseenter = function() { videoEl.play().catch(function(){}); };
       card.onmouseleave = function() { videoEl.pause(); videoEl.currentTime = 0; };
     }
@@ -1509,7 +1537,8 @@
   function preloadNextPopupVideo() {
     var nextIdx = (currentIndex + 1) % allVideos.length;
     var nextVideo = allVideos[nextIdx];
-    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) _preloadVid.src = nextVideo.r2_url;
+    var nextUrl = nextVideo.stream_url || nextVideo.r2_url;
+    if (nextVideo && nextUrl && _preloadVid._nqUrl !== nextUrl) nqAttachVideo(_preloadVid, nextUrl);
   }
 
   function showPopup(bid) {
@@ -1524,15 +1553,16 @@
     popupContent.classList.remove("nq-popup-video-ready");
 
     /* Fade out transition if video already loaded */
-    if (vid.src && vid.src !== video.r2_url) {
+    var videoUrl = video.stream_url || video.r2_url;
+    if (vid._nqUrl && vid._nqUrl !== videoUrl) {
       vid.style.opacity = "0";
       setTimeout(function() {
-        vid.src = video.r2_url;
+        nqAttachVideo(vid, videoUrl);
         vid.play();
         setTimeout(function() { vid.style.opacity = "1"; }, 50);
       }, 150);
     } else {
-      vid.src = video.r2_url;
+      nqAttachVideo(vid, videoUrl);
       vid.play();
       vid.style.opacity = "1";
     }

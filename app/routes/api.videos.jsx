@@ -84,7 +84,7 @@ export const loader = async ({ request }) => {
   try {
     const { data: videos, error } = await getSupabase()
       .from("videos")
-      .select("id, title, r2_url, thumbnail_url, product_ids, show_on, views")
+      .select("id, title, r2_url, stream_url, stream_id, thumbnail_url, product_ids, show_on, views")
       .eq("shop_id", shopId)
       .eq("status", "live")
       .order("created_at", { ascending: false });
