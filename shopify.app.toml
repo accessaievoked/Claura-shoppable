@@ -1,6 +1,6 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "909726fa57dab23f56f3a080d3ada8d6"
+client_id = "738917b0b749fefbe1ad112fb1717d5a"
 name = "NQ-Shoppable-Claura"
 application_url = "https://claura-shoppable.vercel.app"
 embedded = true
