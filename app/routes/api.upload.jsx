@@ -64,6 +64,7 @@ export const action = async ({ request }) => {
     // ── CONFIRM ──
     if (type === "confirm") {
       const { createClient } = await import("@supabase/supabase-js");
+      const { createAndFetchVideo } = await import("../bunny.server.js");
 
       const supabase = createClient(
         process.env.SUPABASE_URL,
@@ -79,11 +80,22 @@ export const action = async ({ request }) => {
       const r2Url = `${process.env.R2_PUBLIC_URL}/${key}`;
       const thumbnailUrl = hasThumb ? `${process.env.R2_PUBLIC_URL}/${thumbKey}` : null;
 
+      // Kick off Bunny Stream ingest (Bunny pulls from R2 — no file transfer here)
+      let bunnyId = null, bunnyUrl = null;
+      try {
+        ({ bunnyId, bunnyUrl } = await createAndFetchVideo(r2Url, title));
+      } catch (bunnyErr) {
+        // Non-fatal — fall back to R2 direct playback if Bunny fails
+        console.warn("Bunny ingest failed, falling back to R2:", bunnyErr.message);
+      }
+
       const { error } = await supabase.from("videos").insert({
         shop_id: shop,
         title,
         r2_url: r2Url,
         r2_key: key,
+        stream_id: bunnyId,    // reusing existing columns
+        stream_url: bunnyUrl,  // HLS playlist URL from Bunny
         status: "draft",
         views: 0,
         product_ids: [],

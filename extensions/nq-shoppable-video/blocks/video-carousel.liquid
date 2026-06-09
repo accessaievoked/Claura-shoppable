@@ -180,11 +180,7 @@
   }
   .nq-hero-swipe-card img,
   .nq-hero-swipe-card video {
-    width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.25s ease-in-out; z-index: 1;
-  }
-  .nq-hero-swipe-card.nq-video-ready img,
-  .nq-hero-swipe-card.nq-video-ready video {
-    opacity: 1;
+    width: 100%; height: 100%; object-fit: cover; display: block; opacity: 1; z-index: 1;
   }
 
   /* Loading overlay + spinner */
@@ -514,12 +510,21 @@
     }
   }
 
-  function preloadFirstVideoLink(url) {
-    if (!url || document.querySelector('link[data-nq-preload="1"]')) return;
-    var link = document.createElement("link");
-    link.rel = "preload"; link.as = "video"; link.href = url;
-    link.setAttribute("data-nq-preload", "1");
-    document.head.appendChild(link);
+  function preloadFirstVideoLink(url, thumbUrl) {
+    if (url && !document.querySelector('link[data-nq-preload="1"]')) {
+      var link = document.createElement("link");
+      link.rel = "preload"; link.as = "video"; link.href = url;
+      link.setAttribute("fetchpriority", "high");
+      link.setAttribute("data-nq-preload", "1");
+      document.head.appendChild(link);
+    }
+    if (thumbUrl && !document.querySelector('link[data-nq-thumb-preload="1"]')) {
+      var tl = document.createElement("link");
+      tl.rel = "preload"; tl.as = "image"; tl.href = thumbUrl;
+      tl.setAttribute("fetchpriority", "high");
+      tl.setAttribute("data-nq-thumb-preload", "1");
+      document.head.appendChild(tl);
+    }
   }
 
   function nqHideSection() {
@@ -533,7 +538,7 @@
   function renderVideos(data) {
     var raw = (data && data.videos) ? data.videos : [];
     allVideos = filterVideos(raw);
-    if (allVideos.length) preloadFirstVideoLink(allVideos[0].stream_url || allVideos[0].r2_url);
+    if (allVideos.length) preloadFirstVideoLink(allVideos[0].stream_url || allVideos[0].r2_url, allVideos[0].thumbnail_url);
 
     if (tileType === "hero_slide") {
       renderHeroSlide();
@@ -548,14 +553,17 @@
       return;
     }
 
-    /* Pre-fetch all products then render at once (original Claura pattern) */
-    var productFetches = allVideos.map(function(v) {
-      return getVideoProduct(v).catch(function() { return null; });
-    });
-    Promise.all(productFetches).then(function(products) {
-      cont.innerHTML = "";
-      allVideos.forEach(function(v, i) { cont.appendChild(buildCard(v, i, products[i])); });
-      finishSetup(cont);
+    /* Render cards immediately — don't wait for product data */
+    cont.innerHTML = "";
+    allVideos.forEach(function(v, i) { cont.appendChild(buildCard(v, i, null)); });
+    finishSetup(cont);
+    /* Inject product overlays lazily as each fetch resolves */
+    allVideos.forEach(function(v, i) {
+      getVideoProduct(v).then(function(p) {
+        if (!p) return;
+        var cards = cont.querySelectorAll(".nq-card");
+        if (cards[i]) injectProductOverlay(cards[i], p);
+      }).catch(function() {});
     });
   }
 
@@ -611,13 +619,24 @@
       }
     }
 
+    /* Build UI immediately with empty product slots — don't wait */
+    if (isMobileView()) {
+      buildMobileSwiper(wrap, new Array(allVideos.length).fill(null));
+    } else {
+      buildDesktopHero(strip, new Array(allVideos.length).fill(null));
+    }
+
+    /* Fill product badges once fetches resolve */
     Promise.all(fetches).then(function(products) {
       heroProducts = products;
-
       if (isMobileView()) {
-        buildMobileSwiper(wrap, products);
+        products.forEach(function(p, i) {
+          if (!p) return;
+          var card = wrap.querySelector('.nq-hero-swipe-card[data-nq-idx="' + i + '"]');
+          if (card) injectSwipeCardBadge(card, p, i);
+        });
       } else {
-        buildDesktopHero(strip, products);
+        heroSetActive(heroIndex);
       }
     });
   }
@@ -1085,8 +1104,10 @@
     var videoUrl = video.stream_url || video.r2_url;
     videoEl.dataset.src = videoUrl;
 
-    if (index < 3) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoUrl); }
-    else if (index < 6) { videoEl.preload = "metadata"; nqAttachVideo(videoEl, videoUrl); }
+    var isSlow = navigator.connection && (navigator.connection.effectiveType === "slow-2g" || navigator.connection.effectiveType === "2g");
+    if (index === 0) { videoEl.setAttribute("fetchpriority", "high"); }
+    if (!isSlow && index < 3) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoUrl); }
+    else if (index < (isSlow ? 1 : 6)) { videoEl.preload = "metadata"; nqAttachVideo(videoEl, videoUrl); }
     else { videoEl.preload = "none"; }
 
     card.onclick = function() { nqOpenPopup(blockId, index); };
@@ -1128,104 +1149,124 @@
       case "img_transparent_text_overlay_3":
       case "img_transparent_text_overlay_2":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        if (p) {
-          var ov = document.createElement("div");
-          ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
-          card.appendChild(ov);
-        }
         break;
-
       case "img_opaque_text_overlay_3":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        if (p) {
-          var ov = document.createElement("div");
-          ov.className = "nq-ov-opaque";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
-            '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span><span class="nq-ov-price">Rs. ' + fmt(p.price) + '</span></div>';
-          card.appendChild(ov);
-        }
         break;
-
       case "single_tile_no_overlay":
         card.style.cssText += "width:" + Math.round(cardW * 0.50) + "px;height:" + Math.round(cardH * 0.65) + "px;";
         break;
-
       case "product_below_3":
       case "product_below_2":
       case "product_below":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;overflow:visible;";
-        if (p) {
-          var discHtml = '';
-          if (p.compare_at_price && p.compare_at_price > p.price) {
-            var pct = Math.round((p.compare_at_price - p.price) / p.compare_at_price * 100);
-            discHtml = '<span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span><span class="nq-disc-badge">' + pct + '% off</span>';
-          }
-          var info = document.createElement("div");
-          info.className = "nq-below-info";
-          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">Rs. ' + fmt(p.price) + ' ' + discHtml + '</p>';
-          card.appendChild(info);
-        }
         break;
-
       case "story_format":
         card.style.cssText += "width:110px;height:110px;border-radius:50%;";
         views.style.display = "none";
         break;
-
       case "feed_view_more":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        if (p) {
-          var ov = document.createElement("div");
-          ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
-          card.appendChild(ov);
-        }
         break;
-
       case "feed_on_scroll":
         card.classList.add("nq-scroll-fade");
-        if (p) {
-          var priceRow = 'Rs. ' + fmt(p.price);
-          if (p.compare_at_price && p.compare_at_price > p.price)
-            priceRow += ' <span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span>';
-          var info = document.createElement("div");
-          info.className = "nq-below-info";
-          info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">' + priceRow + '</p>';
-          card.appendChild(info);
-        }
         break;
-
       case "grid_theme_border":
         card.style.border = "3px solid " + btnColor;
         break;
-
       case "grid_no_border":
         card.style.borderRadius = "0";
         break;
-
       case "3d_navigation":
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
-        if (p) {
-          var ov = document.createElement("div");
-          ov.className = "nq-ov-transparent";
-          ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
-          card.appendChild(ov);
-        }
         break;
-
       case "minimal":
       default:
         card.style.cssText += "width:" + cardW + "px;height:" + cardH + "px;";
         break;
     }
-
+    injectProductOverlay(card, p);
     return card;
   }
 
   /* ── Product helpers ── */
   function fmt(cents) {
     return (Math.round(parseInt(cents)) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  /* Inject product overlay into a card after it's already in the DOM */
+  function injectProductOverlay(card, p) {
+    if (!p) return;
+    switch (tileType) {
+      case "img_transparent_text_overlay_3":
+      case "img_transparent_text_overlay_2":
+      case "feed_view_more":
+      case "3d_navigation": {
+        var ov = document.createElement("div");
+        ov.className = "nq-ov-transparent";
+        ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb" loading="lazy">' : '') + '<span class="nq-ov-title">' + p.title + '</span>';
+        card.appendChild(ov);
+        break;
+      }
+      case "img_opaque_text_overlay_3": {
+        var ov = document.createElement("div");
+        ov.className = "nq-ov-opaque";
+        ov.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb" loading="lazy">' : '') +
+          '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span><span class="nq-ov-price">Rs. ' + fmt(p.price) + '</span></div>';
+        card.appendChild(ov);
+        break;
+      }
+      case "product_below_3":
+      case "product_below_2":
+      case "product_below": {
+        var discHtml = '';
+        if (p.compare_at_price && p.compare_at_price > p.price) {
+          var pct = Math.round((p.compare_at_price - p.price) / p.compare_at_price * 100);
+          discHtml = '<span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span><span class="nq-disc-badge">' + pct + '% off</span>';
+        }
+        var info = document.createElement("div");
+        info.className = "nq-below-info";
+        info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">Rs. ' + fmt(p.price) + ' ' + discHtml + '</p>';
+        card.appendChild(info);
+        break;
+      }
+      case "feed_on_scroll": {
+        var priceRow = 'Rs. ' + fmt(p.price);
+        if (p.compare_at_price && p.compare_at_price > p.price)
+          priceRow += ' <span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span>';
+        var info = document.createElement("div");
+        info.className = "nq-below-info";
+        info.innerHTML = '<p class="nq-below-title">' + p.title + '</p><p class="nq-below-price">' + priceRow + '</p>';
+        card.appendChild(info);
+        break;
+      }
+    }
+  }
+
+  /* Inject product badge into a hero swipe card after build */
+  function injectSwipeCardBadge(card, p, idx) {
+    if (!p) return;
+    var existing = card.querySelector(".nq-hero-product-bar");
+    if (existing) existing.remove();
+    var badge = document.createElement("div");
+    badge.className = "nq-hero-product-bar";
+    badge.style.cssText = "position:absolute;top:10px;right:10px;z-index:5;display:flex;";
+    if (p.image) {
+      var bi = document.createElement("img");
+      bi.src = p.image; bi.alt = p.title; bi.loading = "lazy";
+      bi.style.cssText = "width:32px;height:32px;object-fit:cover;border-radius:5px;flex-shrink:0;";
+      badge.appendChild(bi);
+    }
+    var bInfo = document.createElement("div");
+    bInfo.style.minWidth = "0";
+    bInfo.innerHTML = '<div class="nq-hero-product-title">' + p.title + '</div>' +
+                      '<div class="nq-hero-product-price">Rs. ' + fmt(p.price) + '</div>';
+    badge.appendChild(bInfo);
+    badge.onclick = function(e) {
+      e.stopPropagation();
+      window.location.href = "/products/" + p.handle;
+    };
+    card.appendChild(badge);
   }
 
   var _productCache = {}, _allProductsProm = null;
@@ -1551,6 +1592,9 @@
 
     /* Show loader while video loads */
     popupContent.classList.remove("nq-popup-video-ready");
+
+    /* Always show thumbnail while video loads */
+    if (video.thumbnail_url) vid.poster = video.thumbnail_url;
 
     /* Fade out transition if video already loaded */
     var videoUrl = video.stream_url || video.r2_url;
