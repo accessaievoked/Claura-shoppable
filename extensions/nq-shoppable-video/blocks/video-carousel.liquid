@@ -140,6 +140,29 @@
     100% { background-position: -200% 0; }
   }
 
+  /* Popup video smooth fade transition */
+  .nq-popup-video {
+    opacity: 1;
+    transition: opacity 0.15s ease-out !important;
+  }
+
+  /* Popup loading overlay */
+  .nq-popup-loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
+  }
+  .nq-popup-content.nq-popup-video-ready .nq-popup-loader {
+    opacity: 0;
+  }
+
   /* ── Mobile swipe cards ── */
   .nq-hero-swipe-card {
     flex: 0 0 92%;
@@ -148,7 +171,7 @@
     border-radius: 16px;
     overflow: hidden;
     position: relative;
-    background: #111;
+    background: #000;
     scroll-snap-align: start;
     cursor: pointer;
     box-shadow: 0 4px 18px rgba(0,0,0,0.18);
@@ -157,12 +180,65 @@
   }
   .nq-hero-swipe-card img,
   .nq-hero-swipe-card video {
-    width: 100%; height: 100%; object-fit: cover; display: block;
+    width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.25s ease-in-out; z-index: 1;
+  }
+  .nq-hero-swipe-card.nq-video-ready img,
+  .nq-hero-swipe-card.nq-video-ready video {
+    opacity: 1;
+  }
+
+  /* Loading overlay + spinner */
+  .nq-video-loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
+  }
+  .nq-hero-swipe-card.nq-video-ready .nq-video-loader {
+    opacity: 0;
+  }
+
+  /* Spinner animation */
+  .nq-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: nqSpin 0.8s linear infinite;
+  }
+  @keyframes nqSpin {
+    to { transform: rotate(360deg); }
   }
   .nq-hero-swipe-card.nq-swipe-inactive {
     opacity: 0.45;
     transform: scale(0.94);
     filter: brightness(0.6);
+  }
+  .nq-hero-swipe-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #222 25%, #333 50%, #222 75%);
+    background-size: 200% 100%;
+    animation: nqVideoShimmer 1.4s infinite linear;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .nq-hero-swipe-card:not(.nq-video-ready)::before {
+    opacity: 1;
+  }
+  @keyframes nqVideoShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
   /* Dot indicators — always hidden (removed feature) */
@@ -315,6 +391,7 @@
         </button>
       </div>
       <video class="nq-popup-video" id="nq-popup-video-{{ block.id }}" autoplay muted playsinline></video>
+      <div class="nq-popup-loader"><div class="nq-spinner"></div></div>
       <div class="nq-popup-product" id="nq-popup-product-{{ block.id }}"></div>
       <div class="nq-swipe-hint" id="nq-swipe-hint-{{ block.id }}">
         <span>&#8593; Swipe up for next</span>
@@ -353,6 +430,38 @@
   /* hero+slide state */
   var heroIndex = 0;
   var heroProducts = []; /* pre-fetched product per video index */
+
+  /* ── HLS.js lazy loader (loaded once, cached) ── */
+  var _hlsLib = null; var _hlsLoading = false; var _hlsCbs = [];
+  function nqLoadHls(cb) {
+    if (_hlsLib) { cb(_hlsLib); return; }
+    _hlsCbs.push(cb);
+    if (_hlsLoading) return;
+    _hlsLoading = true;
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+    s.onload = function() { _hlsLib = window.Hls; _hlsLoading = false; _hlsCbs.forEach(function(fn) { fn(_hlsLib); }); _hlsCbs = []; };
+    s.onerror = function() { _hlsLoading = false; _hlsCbs.forEach(function(fn) { fn(null); }); _hlsCbs = []; };
+    document.head.appendChild(s);
+  }
+
+  /* ── Attach a video URL to a <video> element, using HLS.js when needed ── */
+  function nqAttachVideo(vid, url) {
+    if (!url || vid._nqUrl === url) return;
+    vid._nqUrl = url;
+    if (vid._hls) { vid._hls.destroy(); vid._hls = null; }
+    var isHls = url.indexOf(".m3u8") !== -1;
+    if (!isHls) { vid.src = url; vid.load(); return; }
+    /* Safari / iOS support native HLS */
+    if (vid.canPlayType && vid.canPlayType("application/vnd.apple.mpegurl")) {
+      vid.src = url; vid.load(); return;
+    }
+    nqLoadHls(function(Hls) {
+      if (!Hls || !Hls.isSupported()) { vid.src = url; vid.load(); return; }
+      var hls = new Hls({ enableWorker: false });
+      hls.loadSource(url); hls.attachMedia(vid); vid._hls = hls;
+    });
+  }
 
   var productId = null;
   {% if product %}
@@ -424,7 +533,7 @@
   function renderVideos(data) {
     var raw = (data && data.videos) ? data.videos : [];
     allVideos = filterVideos(raw);
-    if (allVideos.length) preloadFirstVideoLink(allVideos[0].r2_url);
+    if (allVideos.length) preloadFirstVideoLink(allVideos[0].stream_url || allVideos[0].r2_url);
 
     if (tileType === "hero_slide") {
       renderHeroSlide();
@@ -491,9 +600,8 @@
     /* Preload first video at highest browser priority immediately */
     if (allVideos[0] && allVideos[0].r2_url) {
       var heroVidEarly = document.getElementById("nq-hero-video-" + blockId);
-      if (heroVidEarly && !heroVidEarly.src) {
-        heroVidEarly.src = allVideos[0].r2_url;
-        heroVidEarly.load();
+      if (heroVidEarly && !heroVidEarly._nqUrl) {
+        nqAttachVideo(heroVidEarly, allVideos[0].r2_url);
         heroVidEarly.play().catch(function(){});
       heroVidEarly.addEventListener("playing", function() { nqHeroShowVideo(blockId); }, { once: true });
       heroVidEarly.addEventListener("loadeddata", function() {
@@ -521,9 +629,8 @@
 
     /* Play hero video immediately — don't wait for side cards to build */
     var heroVidEl = document.getElementById("nq-hero-video-" + blockId);
-    if (heroVidEl && allVideos[0] && allVideos[0].r2_url && !heroVidEl.src) {
-      heroVidEl.src = allVideos[0].r2_url;
-      heroVidEl.load();
+    if (heroVidEl && allVideos[0] && (allVideos[0].stream_url || allVideos[0].r2_url) && !heroVidEl._nqUrl) {
+      nqAttachVideo(heroVidEl, allVideos[0].stream_url || allVideos[0].r2_url);
       heroVidEl.play().catch(function(){});
       var heroMain = document.getElementById("nq-hero-main-" + blockId);
       if (heroMain) heroMain.classList.add("nq-hero-playing");
@@ -569,7 +676,7 @@
         card.appendChild(num);
 
         card.addEventListener("mouseenter", function() {
-          if (!vid.src) { vid.src = v.r2_url; vid.load(); }
+          nqAttachVideo(vid, v.stream_url || v.r2_url);
           vid.play().catch(function(){});
           vid.style.opacity = "1";
         });
@@ -616,6 +723,11 @@
     /* Remove hero-main from normal flow — will be first swipe card */
     if (heroMain) heroMain.style.display = "none";
 
+    /* Preload all thumbnail images into browser cache before building cards */
+    allVideos.forEach(function(v) {
+      if (v.thumbnail_url) { (new Image()).src = v.thumbnail_url; }
+    });
+
     /* Build one swipe card per video */
     /* Clear any leftover swipe cards first */
     wrap.querySelectorAll(".nq-hero-swipe-card").forEach(function(c) { c.remove(); });
@@ -629,21 +741,20 @@
         card.style.width   = cardWidth;
         card.setAttribute("data-nq-idx", idx);
 
-        /* Poster */
-        if (v.thumbnail_url) {
-          var poster = document.createElement("img");
-          poster.src = v.thumbnail_url;
-          poster.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;";
-          poster.setAttribute("data-nq-poster", "1");
-          card.style.position = "relative";
-          card.appendChild(poster);
-        }
-
-        /* Video */
+        /* Video — preload metadata for instant playback */
         var vid = document.createElement("video");
-        vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = "none";
-        vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;";
+        vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = "metadata";
+        if (v.thumbnail_url) { vid.poster = v.thumbnail_url; }
+        vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;";
+
+        /* Loading overlay with spinner */
+        var loader = document.createElement("div");
+        loader.className = "nq-video-loader";
+        loader.innerHTML = '<div class="nq-spinner"></div>';
+        loader.style.cssText = "position:absolute;inset:0;z-index:2;";
+
         card.appendChild(vid);
+        card.appendChild(loader);
 
         /* Product badge */
         var p = products[idx];
@@ -682,20 +793,21 @@
     /* Build dot indicators */
     buildDots(allVideos.length);
 
-    /* Immediately load + play the first swipe card — no black screen */
+    /* Immediately load + play the first swipe card */
     var firstSwipeCard = wrap.querySelector('.nq-hero-swipe-card[data-nq-idx="0"]');
     if (firstSwipeCard) {
       firstSwipeCard.classList.remove("nq-swipe-inactive");
       var firstVid = firstSwipeCard.querySelector("video");
-      var firstPoster = firstSwipeCard.querySelector("img[data-nq-poster]");
-      if (firstVid && allVideos[0] && allVideos[0].r2_url) {
-        firstVid.src = allVideos[0].r2_url;
-        firstVid.load();
-        firstVid.play().then(function() {
-          if (firstPoster) firstPoster.style.opacity = "0";
-        }).catch(function() {
-          /* autoplay blocked — poster stays visible, user tap will start it */
-        });
+      if (firstVid && allVideos[0] && (allVideos[0].stream_url || allVideos[0].r2_url)) {
+        firstVid.preload = "auto";
+        nqAttachVideo(firstVid, allVideos[0].stream_url || allVideos[0].r2_url);
+        firstVid.play().catch(function() {});
+        /* Mark ready once video can play */
+        var markFirstReady = function() {
+          firstSwipeCard.classList.add("nq-video-ready");
+        };
+        firstVid.oncanplay = markFirstReady;
+        firstVid.onloadeddata = markFirstReady;
       }
     }
 
@@ -711,22 +823,51 @@
         var card = entry.target;
         var cIdx = parseInt(card.getAttribute("data-nq-idx"), 10);
         var vid  = card.querySelector("video");
-        var poster = card.querySelector("img[data-nq-poster]");
         if (entry.isIntersecting) {
           currentIndex = cIdx;
           heroIndex    = cIdx;
-          /* Remove dim on active card */
           card.classList.remove("nq-swipe-inactive");
-          /* Lazy load + play video */
-          if (vid && !vid.src) {
-            vid.src = allVideos[cIdx] ? allVideos[cIdx].r2_url : "";
-            vid.load();
+
+          /* Load current video if not already loaded */
+          if (vid && !vid._nqUrl && allVideos[cIdx] && (allVideos[cIdx].stream_url || allVideos[cIdx].r2_url)) {
+            nqAttachVideo(vid, allVideos[cIdx].stream_url || allVideos[cIdx].r2_url);
+
+            /* Mark ready once video can play */
+            var markReady = function() {
+              card.classList.add("nq-video-ready");
+            };
+            vid.oncanplay = markReady;
+            vid.onloadeddata = markReady;
           }
-          if (vid) { vid.play().catch(function(){}); if (poster) poster.style.opacity = "0"; }
+          /* Play with fade-in transition */
+          if (vid) {
+            vid.play().catch(function(){});
+          }
+
+          /* Aggressive preload: load next 2 videos to avoid black screen */
+          for (var preloadOffset = 1; preloadOffset <= 2; preloadOffset++) {
+            var preloadIdx = cIdx + preloadOffset;
+            if (preloadIdx < allVideos.length) {
+              var preloadCard = wrap.querySelector('.nq-hero-swipe-card[data-nq-idx="' + preloadIdx + '"]');
+              if (preloadCard) {
+                var preloadVid = preloadCard.querySelector("video");
+                if (preloadVid && !preloadVid._nqUrl && allVideos[preloadIdx] && (allVideos[preloadIdx].stream_url || allVideos[preloadIdx].r2_url)) {
+                  preloadVid.preload = "auto";
+                  nqAttachVideo(preloadVid, allVideos[preloadIdx].stream_url || allVideos[preloadIdx].r2_url);
+                  /* Setup ready handlers for preload too */
+                  preloadVid.oncanplay = function() { preloadCard.classList.add("nq-video-ready"); };
+                  preloadVid.onloadeddata = function() { preloadCard.classList.add("nq-video-ready"); };
+                }
+              }
+            }
+          }
         } else {
-          /* Dim inactive card */
           card.classList.add("nq-swipe-inactive");
-          if (vid) { vid.pause(); if (poster) poster.style.opacity = "1"; }
+          card.classList.remove("nq-video-ready");
+          if (vid) {
+            vid.pause();
+            vid.currentTime = 0;
+          }
         }
       });
     }, { threshold: 0.55, root: wrap });
@@ -766,8 +907,7 @@
     var heroVid  = document.getElementById("nq-hero-video-" + blockId);
     var heroMain = document.getElementById("nq-hero-main-"  + blockId);
     if (heroVid) {
-      heroVid.src = video.r2_url;
-      heroVid.load();
+      nqAttachVideo(heroVid, video.stream_url || video.r2_url);
       heroVid.play().then(function() {
         if (heroMain) heroMain.classList.add("nq-hero-playing");
         nqHeroShowVideo(blockId);
@@ -942,10 +1082,11 @@
     videoEl.muted = true; videoEl.loop = true; videoEl.playsInline = true;
     videoEl.className = "nq-video-el";
     if (video.thumbnail_url) videoEl.poster = video.thumbnail_url;
-    videoEl.dataset.src = video.r2_url;
+    var videoUrl = video.stream_url || video.r2_url;
+    videoEl.dataset.src = videoUrl;
 
-    if (index < 3) { videoEl.preload = "auto"; videoEl.src = video.r2_url; }
-    else if (index < 6) { videoEl.preload = "metadata"; videoEl.src = video.r2_url; }
+    if (index < 3) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoUrl); }
+    else if (index < 6) { videoEl.preload = "metadata"; nqAttachVideo(videoEl, videoUrl); }
     else { videoEl.preload = "none"; }
 
     card.onclick = function() { nqOpenPopup(blockId, index); };
@@ -955,7 +1096,7 @@
         new IntersectionObserver(function(entries, obs) {
           entries.forEach(function(e) {
             if (e.isIntersecting) {
-              if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
+              if (videoEl.dataset.src && !videoEl._nqUrl) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoEl.dataset.src); }
               obs.unobserve(e.target);
             }
           });
@@ -964,13 +1105,13 @@
       new IntersectionObserver(function(entries) {
         entries.forEach(function(e) {
           if (e.isIntersecting) {
-            if (videoEl.dataset.src && !videoEl.src) { videoEl.src = videoEl.dataset.src; videoEl.preload = "auto"; }
+            if (videoEl.dataset.src && !videoEl._nqUrl) { videoEl.preload = "auto"; nqAttachVideo(videoEl, videoEl.dataset.src); }
             videoEl.play().catch(function(){});
           } else { videoEl.pause(); }
         });
       }, { threshold: 0.3 }).observe(card);
     } else {
-      videoEl.src = video.r2_url;
+      nqAttachVideo(videoEl, video.r2_url);
       card.onmouseenter = function() { videoEl.play().catch(function(){}); };
       card.onmouseleave = function() { videoEl.pause(); videoEl.currentTime = 0; };
     }
@@ -1396,16 +1537,43 @@
   function preloadNextPopupVideo() {
     var nextIdx = (currentIndex + 1) % allVideos.length;
     var nextVideo = allVideos[nextIdx];
-    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) _preloadVid.src = nextVideo.r2_url;
+    var nextUrl = nextVideo.stream_url || nextVideo.r2_url;
+    if (nextVideo && nextUrl && _preloadVid._nqUrl !== nextUrl) nqAttachVideo(_preloadVid, nextUrl);
   }
 
   function showPopup(bid) {
     stopWatchTracking();
     var video = allVideos[currentIndex];
     var vid = document.getElementById("nq-popup-video-" + bid);
+    var popupContent = document.getElementById("nq-popup-content-" + bid);
+
     if (vid._nqEndedHandler) { vid.removeEventListener("ended", vid._nqEndedHandler); vid._nqEndedHandler = null; }
-    vid.src = video.r2_url;
-    vid.play();
+
+    /* Show loader while video loads */
+    popupContent.classList.remove("nq-popup-video-ready");
+
+    /* Fade out transition if video already loaded */
+    var videoUrl = video.stream_url || video.r2_url;
+    if (vid._nqUrl && vid._nqUrl !== videoUrl) {
+      vid.style.opacity = "0";
+      setTimeout(function() {
+        nqAttachVideo(vid, videoUrl);
+        vid.play();
+        setTimeout(function() { vid.style.opacity = "1"; }, 50);
+      }, 150);
+    } else {
+      nqAttachVideo(vid, videoUrl);
+      vid.play();
+      vid.style.opacity = "1";
+    }
+
+    /* Mark ready when video can play */
+    var markPopupReady = function() {
+      popupContent.classList.add("nq-popup-video-ready");
+    };
+    vid.oncanplay = markPopupReady;
+    vid.onloadeddata = markPopupReady;
+
     trackView(video);
     startWatchTracking(video);
     syncLikeBtn(bid);
@@ -1459,42 +1627,6 @@
 })();
 </script>
 
-<!-- NQ Keep-Warm -->
-<script>
-(function() {
-  if (window._nqWarmInit) return;
-  window._nqWarmInit = true;
-  var API  = "https://claura-shoppable.vercel.app/api/videos";
-  var shop = "{{ shop.permanent_domain }}";
-  var url  = API + "?shop=" + shop;
-  var KEY  = "nq_v6_" + shop + "_home";
-  var TTL  = 60 * 60 * 1000;
-  function ping() {
-    fetch(url, { keepalive: true })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (!data || !data.videos || !data.videos.length) return;
-        try {
-          var raw = localStorage.getItem(KEY);
-          var shouldWrite = !raw;
-          if (!shouldWrite) { var obj = JSON.parse(raw); if (Date.now() - obj.ts > TTL) shouldWrite = true; }
-          if (shouldWrite) localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), data: data }));
-          try {
-            var firstVid = data.videos[0];
-            if (firstVid && firstVid.r2_url) {
-              var vLink = document.querySelector('link[data-nq-keepwarm="1"]');
-              if (!vLink) { vLink = document.createElement("link"); vLink.rel = "preload"; vLink.as = "video"; vLink.setAttribute("data-nq-keepwarm", "1"); document.head.appendChild(vLink); }
-              vLink.href = firstVid.r2_url;
-            }
-          } catch(e) {}
-        } catch(e) {}
-      }).catch(function() { setTimeout(ping, 20000); });
-  }
-  ping();
-  setInterval(ping, 4 * 60 * 1000);
-  document.addEventListener("visibilitychange", function() { if (document.visibilityState === "visible") ping(); });
-})();
-</script>
 
 {% schema %}
 {

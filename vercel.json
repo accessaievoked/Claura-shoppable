@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/videos?shop=8613a2-5.myshopify.com",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

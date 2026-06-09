@@ -64,6 +64,7 @@ export const action = async ({ request }) => {
     // ── CONFIRM ──
     if (type === "confirm") {
       const { createClient } = await import("@supabase/supabase-js");
+
       const supabase = createClient(
         process.env.SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -72,20 +73,30 @@ export const action = async ({ request }) => {
       const key = formData.get("key");
       const thumbKey = formData.get("thumb_key");
       const hasThumb = formData.get("has_thumb") === "true";
-      const r2Url = `${process.env.R2_PUBLIC_URL}/${key}`;
-      const thumbnailUrl = hasThumb ? `${process.env.R2_PUBLIC_URL}/${thumbKey}` : null;
 
       console.log("Confirm upload - shop:", shop, "key:", key);
 
+      const r2Url = `${process.env.R2_PUBLIC_URL}/${key}`;
+      const thumbnailUrl = hasThumb ? `${process.env.R2_PUBLIC_URL}/${thumbKey}` : null;
+
       const { error } = await supabase.from("videos").insert({
-        shop_id: shop, title, r2_url: r2Url, r2_key: key,
-        status: "draft", views: 0, product_ids: [], show_on: [],
+        shop_id: shop,
+        title,
+        r2_url: r2Url,
+        r2_key: key,
+        status: "draft",
+        views: 0,
+        product_ids: [],
+        show_on: [],
         thumbnail_url: thumbnailUrl,
       });
 
       if (error) {
         console.error("Supabase error:", error);
-        return new Response(JSON.stringify({ error: `${error.message} (code:${error.code})` }), { headers: HEADERS });
+        return new Response(
+          JSON.stringify({ error: `${error.message} (code:${error.code})` }),
+          { headers: HEADERS }
+        );
       }
 
       return new Response(JSON.stringify({ ok: true, shop }), { headers: HEADERS });
