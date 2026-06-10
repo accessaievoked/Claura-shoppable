@@ -480,6 +480,25 @@
 }
 .nq-popup-shop-btn:hover { opacity: 0.88; }
 
+/* ── Loading spinner (shown while switching videos) ── */
+@keyframes nq-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.nq-popup-spinner {
+  display: none;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px; height: 44px;
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: nq-spin 0.7s linear infinite;
+  z-index: 20;
+  pointer-events: none;
+}
+.nq-popup-spinner.nq-spinning { display: block; }
+
 /* Like / Share */
 .nq-popup-actions {
   position: absolute; right: 12px; bottom: 220px;

@@ -315,6 +315,7 @@
         </button>
       </div>
       <video class="nq-popup-video" id="nq-popup-video-{{ block.id }}" autoplay muted playsinline></video>
+      <div class="nq-popup-spinner" id="nq-popup-spinner-{{ block.id }}"></div>
       <div class="nq-popup-product" id="nq-popup-product-{{ block.id }}"></div>
       <div class="nq-swipe-hint" id="nq-swipe-hint-{{ block.id }}">
         <span>&#8593; Swipe up for next</span>
@@ -1389,29 +1390,51 @@
     } catch(e) {}
   })();
 
-  var _preloadVid = document.createElement("video");
-  _preloadVid.muted = true; _preloadVid.preload = "auto"; _preloadVid.style.display = "none";
-  document.body.appendChild(_preloadVid);
+  /* ── Preload next + prev videos for instant popup navigation ── */
+  var _preloadNext = document.createElement("video");
+  _preloadNext.muted = true; _preloadNext.preload = "auto"; _preloadNext.style.display = "none";
+  document.body.appendChild(_preloadNext);
 
-  function preloadNextPopupVideo() {
+  var _preloadPrev = document.createElement("video");
+  _preloadPrev.muted = true; _preloadPrev.preload = "auto"; _preloadPrev.style.display = "none";
+  document.body.appendChild(_preloadPrev);
+
+  function preloadAdjacentVideos() {
+    if (!allVideos.length) return;
     var nextIdx = (currentIndex + 1) % allVideos.length;
-    var nextVideo = allVideos[nextIdx];
-    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) _preloadVid.src = nextVideo.r2_url;
+    var prevIdx = (currentIndex - 1 + allVideos.length) % allVideos.length;
+    var nextUrl = allVideos[nextIdx] && allVideos[nextIdx].r2_url;
+    var prevUrl = allVideos[prevIdx] && allVideos[prevIdx].r2_url;
+    if (nextUrl && _preloadNext.src !== nextUrl) _preloadNext.src = nextUrl;
+    if (prevUrl && _preloadPrev.src !== prevUrl) _preloadPrev.src = prevUrl;
   }
 
   function showPopup(bid) {
     stopWatchTracking();
     var video = allVideos[currentIndex];
     var vid = document.getElementById("nq-popup-video-" + bid);
+    var spinner = document.getElementById("nq-popup-spinner-" + bid);
+
     if (vid._nqEndedHandler) { vid.removeEventListener("ended", vid._nqEndedHandler); vid._nqEndedHandler = null; }
+
+    /* Show spinner + thumbnail poster immediately */
+    if (spinner) spinner.classList.add("nq-spinning");
+    if (video.thumbnail_url) { vid.poster = video.thumbnail_url; } else { vid.removeAttribute("poster"); }
+
     vid.src = video.r2_url;
-    vid.play();
+    vid.play().catch(function(){});
+
+    /* Hide spinner once video is actually playing */
+    function hideSpinner() { if (spinner) spinner.classList.remove("nq-spinning"); }
+    vid.addEventListener("playing", hideSpinner, { once: true });
+    vid.addEventListener("canplay", hideSpinner, { once: true });
+
     trackView(video);
     startWatchTracking(video);
     syncLikeBtn(bid);
     vid._nqEndedHandler = function() { currentIndex = (currentIndex + 1) % allVideos.length; if (tileType === "hero_slide") heroSetActive(currentIndex); showPopup(bid); };
     vid.addEventListener("ended", vid._nqEndedHandler);
-    setTimeout(preloadNextPopupVideo, 500);
+    preloadAdjacentVideos();
     var pd = document.getElementById("nq-popup-product-" + bid);
     pd.innerHTML = "";
     if ((video.product_ids && video.product_ids.length) || (video.product_handle && video.product_handle.length)) {
