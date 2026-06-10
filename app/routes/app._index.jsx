@@ -18,7 +18,7 @@ export const loader = async ({ request }) => {
     // Test with no filter first
     const { data: allVideos, error: fetchError } = await supabase
       .from("videos")
-      .select("id, shop_id, status, views, buy_now_clicks, watch_seconds, orders, revenue, created_at, product_ids").eq("shop_id", shop);
+      .select("id, shop_id, status, views, buy_now_clicks, watch_seconds, orders, revenue, created_at, product_ids");
     
     console.log("SUPABASE URL:", process.env.SUPABASE_URL?.substring(0,40));
     console.log("All videos fetched:", allVideos?.length, "error:", fetchError?.message, fetchError?.code);
