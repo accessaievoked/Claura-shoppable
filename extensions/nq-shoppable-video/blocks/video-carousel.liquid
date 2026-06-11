@@ -294,6 +294,12 @@
   </p>
   {% endif %}
 
+  <!-- Scroll-down hint — shown on mobile only via JS -->
+  <div class="nq-scroll-down-hint" id="nq-scroll-hint-{{ block.id }}">
+    <span class="nq-scroll-down-hint-text">Scroll</span>
+    <span class="nq-scroll-down-hint-arrow">&#8595;</span>
+  </div>
+
 </div>
 
 <!-- Fullscreen Popup -->
@@ -459,6 +465,39 @@
     if (tileType === "feed_on_scroll")     initScrollReveal(cont);
     else if (tileType === "3d_navigation") init3D();
     else                                   initScrollBtns();
+    initScrollHint();
+  }
+
+  /* ── Scroll-down hint (mobile only) ── */
+  function initScrollHint() {
+    if (window.innerWidth > 767) return;           /* desktop: skip */
+    var hint = document.getElementById("nq-scroll-hint-" + blockId);
+    var sec  = document.getElementById("nq-section-" + blockId);
+    var cont = document.getElementById("nq-carousel-" + blockId);
+    if (!hint || !cont) return;
+
+    /* Only show when there are more cards than fit in the viewport */
+    if (cont.scrollWidth <= cont.clientWidth + 10) return;
+
+    /* Delay show slightly so it doesn't flash during render */
+    var showTimer = setTimeout(function() {
+      hint.classList.add("nq-hint-visible");
+    }, 800);
+
+    function dismissHint() {
+      hint.classList.add("nq-hint-hiding");
+      setTimeout(function() { hint.classList.remove("nq-hint-visible", "nq-hint-hiding"); }, 380);
+      cont.removeEventListener("scroll", dismissHint);
+      cont.removeEventListener("touchstart", dismissHint);
+      window.removeEventListener("scroll", dismissHint);
+    }
+
+    /* Auto-dismiss after 3.5 seconds regardless */
+    setTimeout(dismissHint, 3500);
+
+    /* Dismiss on any interaction with the carousel */
+    cont.addEventListener("scroll", dismissHint, { passive: true, once: true });
+    cont.addEventListener("touchstart", dismissHint, { passive: true, once: true });
   }
 
   /* ════════════════════════════════════════════════════════════

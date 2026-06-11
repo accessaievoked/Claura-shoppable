@@ -377,14 +377,26 @@ export default function Videos() {
           }}>+ Import Video</button>
         </div>
       ) : (
+        {/* Build position map: homepage videos in display order → position 1, 2, 3… */}
+        {(() => {
+          const homepagePositions = {};
+          videos.filter(v => isOnHomepage(v)).forEach((v, i) => { homepagePositions[v.id] = i + 1; });
+
+          return (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "20px" }}>
           {videos.map((video) => {
             const onHomepage = isOnHomepage(video);
+            const position   = homepagePositions[video.id];
             const taggedProducts = products.filter(p => (video.product_ids || []).includes(p.id));
             return (
               <div key={video.id} style={{
-                background: C.card, borderRadius: "10px", overflow: "hidden",
-                border: `1px solid ${C.border}`, borderTop: `2px solid ${C.accent}`,
+                background: onHomepage ? "#edfaf3" : C.card,
+                borderRadius: "12px", overflow: "hidden",
+                border: `2px solid ${onHomepage ? "#16a34a" : C.border}`,
+                boxShadow: onHomepage
+                  ? "0 0 0 4px rgba(22,163,74,0.15), 0 4px 16px rgba(0,0,0,0.08)"
+                  : "0 1px 4px rgba(0,0,0,0.06)",
+                transition: "border-color 0.2s, box-shadow 0.2s, background 0.2s",
               }}>
                 <div style={{ position: "relative", height: "260px", background: "#111" }}>
                   <video src={video.r2_url}
@@ -393,18 +405,36 @@ export default function Videos() {
                     muted playsInline preload="none"
                     onMouseEnter={e => e.target.play()} onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }}
                   />
+                  {/* Status badge */}
                   <div style={{
                     position: "absolute", top: "8px", left: "8px",
                     background: video.status === "live" ? C.liveBg : C.draftBg,
                     color: video.status === "live" ? C.live : C.draft,
                     fontSize: "10px", fontWeight: "700", padding: "3px 8px", borderRadius: "20px"
                   }}>{video.status === "live" ? "● LIVE" : "● DRAFT"}</div>
+
+                  {/* Homepage badge */}
                   {onHomepage && (
                     <div style={{
                       position: "absolute", top: "8px", right: "8px",
-                      background: C.homeBg, color: C.home,
-                      fontSize: "10px", fontWeight: "700", padding: "3px 8px", borderRadius: "20px"
-                    }}>🏠 Homepage</div>
+                      background: "#16a34a", color: "#fff",
+                      fontSize: "10px", fontWeight: "700", padding: "3px 8px", borderRadius: "20px",
+                      display: "flex", alignItems: "center", gap: "4px",
+                    }}>🏠 In Carousel</div>
+                  )}
+
+                  {/* Position number badge */}
+                  {onHomepage && (
+                    <div style={{
+                      position: "absolute", bottom: "10px", left: "10px",
+                      width: "32px", height: "32px", borderRadius: "50%",
+                      background: "#16a34a",
+                      border: "2.5px solid #fff",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "13px", fontWeight: "800", color: "#fff",
+                      lineHeight: 1,
+                    }}>{position}</div>
                   )}
                 </div>
                 <div style={{ padding: "14px 12px" }}>
@@ -437,9 +467,11 @@ export default function Videos() {
                       <input type="hidden" name="action" value={onHomepage ? "remove_from_homepage" : "add_to_homepage"} />
                       <button type="submit" style={{
                         width: "100%", padding: "7px 12px",
-                        background: onHomepage ? C.homeBg : "#f5f3ff", color: onHomepage ? C.home : "#5b21b6",
-                        border: "1px solid #c4b5fd", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "500"
-                      }}>{onHomepage ? "✓ On Homepage" : "+ Add to Homepage"}</button>
+                        background: onHomepage ? "#16a34a" : "#f5f3ff",
+                        color: onHomepage ? "#fff" : "#5b21b6",
+                        border: `1px solid ${onHomepage ? "#15803d" : "#c4b5fd"}`,
+                        borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "600"
+                      }}>{onHomepage ? `✓ Position ${position} in Carousel` : "+ Add to Carousel"}</button>
                     </Form>
 
                     <div style={{ display: "flex", gap: "6px" }}>
@@ -466,6 +498,8 @@ export default function Videos() {
             );
           })}
         </div>
+          );
+        })()}
       )}
 
       {/* ══════ IMPORT MODAL ══════ */}

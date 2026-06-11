@@ -499,6 +499,59 @@
 }
 .nq-popup-spinner.nq-spinning { display: block; }
 
+/* ============================================================
+   SCROLL DOWN HINT — mobile carousel
+   ============================================================ */
+@keyframes nq-bounce-down {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(6px); }
+}
+@keyframes nq-hint-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.nq-scroll-down-hint {
+  display: none; /* shown by JS on mobile only */
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  animation: nq-hint-fade-in 0.4s ease forwards, nq-bounce-down 1.4s ease-in-out 0.6s infinite;
+}
+.nq-scroll-down-hint.nq-hint-visible { display: flex; }
+.nq-scroll-down-hint.nq-hint-hiding {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.nq-scroll-down-hint-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+.nq-scroll-down-hint-arrow {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255,255,255,0.85);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
 /* Like / Share */
 .nq-popup-actions {
   position: absolute; right: 12px; bottom: 220px;
