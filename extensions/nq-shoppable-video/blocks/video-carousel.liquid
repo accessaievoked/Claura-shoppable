@@ -314,7 +314,8 @@
           <span class="nq-action-label">Share</span>
         </button>
       </div>
-      <video class="nq-popup-video" id="nq-popup-video-{{ block.id }}" autoplay muted playsinline></video>
+      <video class="nq-popup-video" id="nq-popup-video-{{ block.id }}" autoplay muted playsinline preload="metadata"></video>
+      <div class="nq-popup-spinner" id="nq-popup-spinner-{{ block.id }}"></div>
       <div class="nq-popup-product" id="nq-popup-product-{{ block.id }}"></div>
       <div class="nq-swipe-hint" id="nq-swipe-hint-{{ block.id }}">
         <span>&#8593; Swipe up for next</span>
@@ -439,14 +440,18 @@
       return;
     }
 
-    /* Pre-fetch all products then render at once (original Claura pattern) */
-    var productFetches = allVideos.map(function(v) {
-      return getVideoProduct(v).catch(function() { return null; });
-    });
-    Promise.all(productFetches).then(function(products) {
-      cont.innerHTML = "";
-      allVideos.forEach(function(v, i) { cont.appendChild(buildCard(v, i, products[i])); });
-      finishSetup(cont);
+    /* Render cards immediately — no waiting for products */
+    cont.innerHTML = "";
+    allVideos.forEach(function(v, i) { cont.appendChild(buildCard(v, i, null)); });
+    finishSetup(cont);
+
+    /* Fill product overlays per-card as each resolves */
+    allVideos.forEach(function(v, i) {
+      getVideoProduct(v).then(function(p) {
+        if (!p) return;
+        var cards = cont.querySelectorAll(".nq-card");
+        if (cards[i]) injectProductOverlay(cards[i], p);
+      }).catch(function() {});
     });
   }
 
@@ -484,10 +489,6 @@
     }
 
     /* Pre-fetch all products then build UI */
-    var fetches = allVideos.map(function(v) {
-      return getVideoProduct(v).catch(function() { return null; });
-    });
-
     /* Preload first video at highest browser priority immediately */
     if (allVideos[0] && allVideos[0].r2_url) {
       var heroVidEarly = document.getElementById("nq-hero-video-" + blockId);
@@ -495,22 +496,34 @@
         heroVidEarly.src = allVideos[0].r2_url;
         heroVidEarly.load();
         heroVidEarly.play().catch(function(){});
-      heroVidEarly.addEventListener("playing", function() { nqHeroShowVideo(blockId); }, { once: true });
-      heroVidEarly.addEventListener("loadeddata", function() {
-        heroVidEarly.play().catch(function(){});
-        nqHeroShowVideo(blockId);
-      }, { once: true });
+        heroVidEarly.addEventListener("playing", function() { nqHeroShowVideo(blockId); }, { once: true });
+        heroVidEarly.addEventListener("loadeddata", function() {
+          heroVidEarly.play().catch(function(){});
+          nqHeroShowVideo(blockId);
+        }, { once: true });
       }
     }
 
-    Promise.all(fetches).then(function(products) {
-      heroProducts = products;
+    /* Build UI immediately with empty product slots */
+    heroProducts = new Array(allVideos.length).fill(null);
+    if (isMobileView()) {
+      buildMobileSwiper(wrap, heroProducts);
+    } else {
+      buildDesktopHero(strip, heroProducts);
+    }
 
-      if (isMobileView()) {
-        buildMobileSwiper(wrap, products);
-      } else {
-        buildDesktopHero(strip, products);
-      }
+    /* Fill product data asynchronously per-video */
+    allVideos.forEach(function(v, i) {
+      getVideoProduct(v).then(function(p) {
+        heroProducts[i] = p;
+        /* If this is the active video, refresh the product bar */
+        if (i === heroIndex) heroSetActive(heroIndex);
+        /* On mobile, inject badge into the swipe card */
+        if (isMobileView() && p) {
+          var card = wrap.querySelector('.nq-hero-swipe-card[data-nq-idx="' + i + '"]');
+          if (card) injectHeroProductBadge(card, p);
+        }
+      }).catch(function() {});
     });
   }
 
@@ -947,6 +960,7 @@
     if (index < 3) { videoEl.preload = "auto"; videoEl.src = video.r2_url; }
     else if (index < 6) { videoEl.preload = "metadata"; videoEl.src = video.r2_url; }
     else { videoEl.preload = "none"; }
+    if (index < 2) { videoEl.setAttribute("fetchpriority", "high"); }
 
     card.onclick = function() { nqOpenPopup(blockId, index); };
 
@@ -959,7 +973,7 @@
               obs.unobserve(e.target);
             }
           });
-        }, { rootMargin: "400px" }).observe(card);
+        }, { rootMargin: "800px" }).observe(card);
       }
       new IntersectionObserver(function(entries) {
         entries.forEach(function(e) {
@@ -1082,37 +1096,143 @@
     return card;
   }
 
+  /* ── Async product overlay injectors ── */
+  function injectProductOverlay(card, p) {
+    if (!p) return;
+    if (card.querySelector(".nq-ov-transparent,.nq-ov-opaque,.nq-below-info")) return;
+    switch (tileType) {
+      case "img_transparent_text_overlay_3":
+      case "img_transparent_text_overlay_2":
+      case "feed_view_more":
+      case "3d_navigation": {
+        var ov1 = document.createElement("div");
+        ov1.className = "nq-ov-transparent";
+        ov1.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
+          '<span class="nq-ov-title">' + p.title + '</span>';
+        card.appendChild(ov1);
+        break;
+      }
+      case "img_opaque_text_overlay_3": {
+        var ov2 = document.createElement("div");
+        ov2.className = "nq-ov-opaque";
+        ov2.innerHTML = (p.image ? '<img src="' + p.image + '" class="nq-ov-thumb">' : '') +
+          '<div class="nq-ov-text"><span class="nq-ov-title">' + p.title + '</span>' +
+          '<span class="nq-ov-price">Rs. ' + fmt(p.price) + '</span></div>';
+        card.appendChild(ov2);
+        break;
+      }
+      case "product_below_3":
+      case "product_below_2":
+      case "product_below": {
+        var dh1 = '';
+        if (p.compare_at_price && p.compare_at_price > p.price) {
+          var pct1 = Math.round((p.compare_at_price - p.price) / p.compare_at_price * 100);
+          dh1 = '<span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span>' +
+            '<span class="nq-disc-badge">' + pct1 + '% off</span>';
+        }
+        var inf1 = document.createElement("div");
+        inf1.className = "nq-below-info";
+        inf1.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
+          '<p class="nq-below-price">Rs. ' + fmt(p.price) + ' ' + dh1 + '</p>';
+        card.appendChild(inf1);
+        break;
+      }
+      case "feed_on_scroll": {
+        var pr1 = 'Rs. ' + fmt(p.price);
+        if (p.compare_at_price && p.compare_at_price > p.price)
+          pr1 += ' <span class="nq-orig-price">Rs. ' + fmt(p.compare_at_price) + '</span>';
+        var inf2 = document.createElement("div");
+        inf2.className = "nq-below-info";
+        inf2.innerHTML = '<p class="nq-below-title">' + p.title + '</p>' +
+          '<p class="nq-below-price">' + pr1 + '</p>';
+        card.appendChild(inf2);
+        break;
+      }
+    }
+  }
+
+  function injectHeroProductBadge(card, p) {
+    if (!p || card.querySelector(".nq-hero-product-bar")) return;
+    var badge = document.createElement("div");
+    badge.className = "nq-hero-product-bar";
+    badge.style.cssText = "position:absolute;top:10px;right:10px;z-index:5;display:flex;";
+    if (p.image) {
+      var bi = document.createElement("img");
+      bi.src = p.image; bi.alt = p.title;
+      bi.style.cssText = "width:32px;height:32px;object-fit:cover;border-radius:5px;flex-shrink:0;";
+      badge.appendChild(bi);
+    }
+    var bInfo = document.createElement("div");
+    bInfo.style.minWidth = "0";
+    bInfo.innerHTML = '<div class="nq-hero-product-title">' + p.title + '</div>' +
+                      '<div class="nq-hero-product-price">Rs. ' + fmt(p.price) + '</div>';
+    badge.appendChild(bInfo);
+    badge.onclick = function(e) {
+      e.stopPropagation();
+      window.location.href = "/products/" + p.handle;
+    };
+    card.appendChild(badge);
+  }
+
   /* ── Product helpers ── */
   function fmt(cents) {
     return (Math.round(parseInt(cents)) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
   var _productCache = {}, _allProductsProm = null;
+  var _pcKey = "nq_pc_v1_" + shop;
+  var _pcTTL = 30 * 60 * 1000; /* 30-min product cache */
+
+  function readProductCache() {
+    try {
+      var raw = localStorage.getItem(_pcKey);
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (Date.now() - obj.ts > _pcTTL) { localStorage.removeItem(_pcKey); return null; }
+      return obj.data;
+    } catch(e) { return null; }
+  }
+  function writeProductCache(c) {
+    try { localStorage.setItem(_pcKey, JSON.stringify({ ts: Date.now(), data: c })); } catch(e) {}
+  }
+
+  function fetchProductPages(page) {
+    return fetch("/products.json?limit=250&page=" + page)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var prods = d.products || [];
+        prods.forEach(function(p) {
+          var pid = String(p.id), pv = p.variants && p.variants[0];
+          if (pv) {
+            _productCache[pid] = {
+              title: p.title,
+              price: Math.round(parseFloat(pv.price) * 100),
+              compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
+              handle: p.handle,
+              image: p.images && p.images[0] ? p.images[0].src : null
+            };
+          }
+        });
+        if (prods.length === 250) return fetchProductPages(page + 1);
+        return _productCache;
+      }).catch(function() { return _productCache; });
+  }
 
   function prefetchAllProducts() {
     if (_allProductsProm) return _allProductsProm;
-    function fetchPage(page, acc) {
-      return fetch("/products.json?limit=250&page=" + page)
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          var prods = d.products || [];
-          prods.forEach(function(p) {
-            var pid = String(p.id), pv = p.variants && p.variants[0];
-            if (pv && !acc[pid]) {
-              acc[pid] = {
-                title: p.title,
-                price: Math.round(parseFloat(pv.price) * 100),
-                compare_at_price: pv.compare_at_price ? Math.round(parseFloat(pv.compare_at_price) * 100) : null,
-                handle: p.handle,
-                image: p.images && p.images[0] ? p.images[0].src : null
-              };
-            }
-          });
-          if (prods.length === 250) return fetchPage(page + 1, acc);
-          return acc;
-        }).catch(function() { return acc; });
+    var lsCache = readProductCache();
+    if (lsCache && Object.keys(lsCache).length > 0) {
+      /* Hydrate in-memory cache from localStorage instantly (0ms) */
+      Object.keys(lsCache).forEach(function(k) { _productCache[k] = lsCache[k]; });
+      _allProductsProm = Promise.resolve(_productCache);
+      /* Refresh in background — don't block rendering */
+      fetchProductPages(1).then(writeProductCache).catch(function() {});
+      return _allProductsProm;
     }
-    _allProductsProm = fetchPage(1, _productCache);
+    _allProductsProm = fetchProductPages(1).then(function(c) {
+      writeProductCache(c);
+      return c;
+    });
     return _allProductsProm;
   }
   prefetchAllProducts();
@@ -1389,29 +1509,51 @@
     } catch(e) {}
   })();
 
-  var _preloadVid = document.createElement("video");
-  _preloadVid.muted = true; _preloadVid.preload = "auto"; _preloadVid.style.display = "none";
-  document.body.appendChild(_preloadVid);
+  /* ── Preload next + prev videos for instant popup navigation ── */
+  var _preloadNext = document.createElement("video");
+  _preloadNext.muted = true; _preloadNext.preload = "auto"; _preloadNext.style.display = "none";
+  document.body.appendChild(_preloadNext);
 
-  function preloadNextPopupVideo() {
+  var _preloadPrev = document.createElement("video");
+  _preloadPrev.muted = true; _preloadPrev.preload = "auto"; _preloadPrev.style.display = "none";
+  document.body.appendChild(_preloadPrev);
+
+  function preloadAdjacentVideos() {
+    if (!allVideos.length) return;
     var nextIdx = (currentIndex + 1) % allVideos.length;
-    var nextVideo = allVideos[nextIdx];
-    if (nextVideo && nextVideo.r2_url && _preloadVid.src !== nextVideo.r2_url) _preloadVid.src = nextVideo.r2_url;
+    var prevIdx = (currentIndex - 1 + allVideos.length) % allVideos.length;
+    var nextUrl = allVideos[nextIdx] && allVideos[nextIdx].r2_url;
+    var prevUrl = allVideos[prevIdx] && allVideos[prevIdx].r2_url;
+    if (nextUrl && _preloadNext.src !== nextUrl) _preloadNext.src = nextUrl;
+    if (prevUrl && _preloadPrev.src !== prevUrl) _preloadPrev.src = prevUrl;
   }
 
   function showPopup(bid) {
     stopWatchTracking();
     var video = allVideos[currentIndex];
     var vid = document.getElementById("nq-popup-video-" + bid);
+    var spinner = document.getElementById("nq-popup-spinner-" + bid);
+
     if (vid._nqEndedHandler) { vid.removeEventListener("ended", vid._nqEndedHandler); vid._nqEndedHandler = null; }
+
+    /* Show spinner + thumbnail poster immediately */
+    if (spinner) spinner.classList.add("nq-spinning");
+    if (video.thumbnail_url) { vid.poster = video.thumbnail_url; } else { vid.removeAttribute("poster"); }
+
     vid.src = video.r2_url;
-    vid.play();
+    vid.play().catch(function(){});
+
+    /* Hide spinner once video is actually playing */
+    function hideSpinner() { if (spinner) spinner.classList.remove("nq-spinning"); }
+    vid.addEventListener("playing", hideSpinner, { once: true });
+    vid.addEventListener("canplay", hideSpinner, { once: true });
+
     trackView(video);
     startWatchTracking(video);
     syncLikeBtn(bid);
     vid._nqEndedHandler = function() { currentIndex = (currentIndex + 1) % allVideos.length; if (tileType === "hero_slide") heroSetActive(currentIndex); showPopup(bid); };
     vid.addEventListener("ended", vid._nqEndedHandler);
-    setTimeout(preloadNextPopupVideo, 500);
+    preloadAdjacentVideos();
     var pd = document.getElementById("nq-popup-product-" + bid);
     pd.innerHTML = "";
     if ((video.product_ids && video.product_ids.length) || (video.product_handle && video.product_handle.length)) {
@@ -1491,7 +1633,7 @@
       }).catch(function() { setTimeout(ping, 20000); });
   }
   ping();
-  setInterval(ping, 4 * 60 * 1000);
+  setInterval(ping, 90 * 1000);
   document.addEventListener("visibilitychange", function() { if (document.visibilityState === "visible") ping(); });
 })();
 </script>

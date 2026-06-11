@@ -13,22 +13,16 @@ export const loader = async ({ request }) => {
   );
 
   try {
-    const shopTrimmed = shop.trim().toLowerCase();
-    
-    // Test with no filter first
     const { data: allVideos, error: fetchError } = await supabase
       .from("videos")
-      .select("id, shop_id, status, views, buy_now_clicks, watch_seconds, orders, revenue, created_at, product_ids");
-    
-    console.log("SUPABASE URL:", process.env.SUPABASE_URL?.substring(0,40));
-    console.log("All videos fetched:", allVideos?.length, "error:", fetchError?.message, fetchError?.code);
-    console.log("Shop:", JSON.stringify(shopTrimmed));
-    
+      .select("id, shop_id, status, views, buy_now_clicks, watch_seconds, orders, revenue, created_at, product_ids")
+      .eq("shop_id", shop);
+
     if (fetchError) {
       return { total: 0, live: 0, totalViews: 0, totalClicks: 0, totalWatchSec: 0, totalOrders: 0, totalRevenue: 0, videos: [], errorMsg: `Supabase: ${fetchError.message} (${fetchError.code})`, debugShop: shop, debugCount: 0 };
     }
-    
-    const videos = allVideos?.filter(v => v.shop_id?.trim().toLowerCase() === shopTrimmed) || [];
+
+    const videos = allVideos || [];
 
     const total         = videos?.length || 0;
     const live          = videos?.filter(v => v.status === "live").length || 0;
@@ -38,7 +32,6 @@ export const loader = async ({ request }) => {
     const totalOrders   = videos?.reduce((sum, v) => sum + (v.orders        || 0), 0) || 0;
     const totalRevenue  = videos?.reduce((sum, v) => sum + (v.revenue       || 0), 0) || 0;
 
-    console.log("Dashboard - shop:", shop, "videos found:", videos?.length, "first video:", videos?.[0]?.shop_id);
     return {
       total, live, totalViews, totalClicks, totalWatchSec, totalOrders, totalRevenue,
       videos: videos || [],
