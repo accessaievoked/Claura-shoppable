@@ -339,6 +339,10 @@ export default function Videos() {
   const filteredProducts = searchQuery ? products.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase())) : products;
   const isOnHomepage = (v) => Array.isArray(v.show_on) && v.show_on.includes("home");
 
+  /* Build position map: homepage videos in display order → position 1, 2, 3… */
+  const homepagePositions = {};
+  videos.filter(v => isOnHomepage(v)).forEach((v, i) => { homepagePositions[v.id] = i + 1; });
+
   /* ── Check if URL from /app/videos/new should open modal ── */
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.pathname.endsWith("/new")) {
@@ -377,12 +381,6 @@ export default function Videos() {
           }}>+ Import Video</button>
         </div>
       ) : (
-        {/* Build position map: homepage videos in display order → position 1, 2, 3… */}
-        {(() => {
-          const homepagePositions = {};
-          videos.filter(v => isOnHomepage(v)).forEach((v, i) => { homepagePositions[v.id] = i + 1; });
-
-          return (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "20px" }}>
           {videos.map((video) => {
             const onHomepage = isOnHomepage(video);
@@ -498,8 +496,6 @@ export default function Videos() {
             );
           })}
         </div>
-          );
-        })()}
       )}
 
       {/* ══════ IMPORT MODAL ══════ */}
