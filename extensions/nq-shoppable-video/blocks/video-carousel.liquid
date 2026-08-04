@@ -390,6 +390,41 @@
     try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
   }
 
+  /* ── View-count floor ───────────────────────────────────────────
+     /api/videos has a 60s server-side memory cache, so right after a
+     view is tracked the API still reports the OLD number. Without a
+     floor, the optimistic +1 painted on the card gets overwritten by
+     that stale value and the counter visibly snaps back.
+
+     We remember the highest number we've shown per video for this
+     session and never render lower than it. Once the server catches
+     up its value exceeds the floor and takes over naturally, so this
+     can't drift or double-count. */
+  var VIEW_FLOOR_KEY = "nq_view_floor_" + shop;
+  var viewFloor = {};
+  try { viewFloor = JSON.parse(sessionStorage.getItem(VIEW_FLOOR_KEY) || "{}") || {}; } catch(e) { viewFloor = {}; }
+
+  function saveViewFloor() {
+    try { sessionStorage.setItem(VIEW_FLOOR_KEY, JSON.stringify(viewFloor)); } catch(e) {}
+  }
+  function displayViews(video) {
+    if (!video) return 0;
+    var n = video.views || 0;
+    var f = viewFloor[video.id] || 0;
+    return n > f ? n : f;
+  }
+  /* Repaints every visible view badge from allVideos. Single place that
+     touches .nq-views so the popup path and the fetch path can't disagree. */
+  function paintViews() {
+    var cont = document.getElementById("nq-carousel-" + blockId);
+    if (!cont) return;
+    cont.querySelectorAll(".nq-card,.nq-side-card").forEach(function(card, i) {
+      if (!allVideos[i]) return;
+      var el = card.querySelector(".nq-views");
+      if (el) el.innerHTML = "&#128065; " + displayViews(allVideos[i]);
+    });
+  }
+
   function filterVideos(raw) {
     if (!productId) {
       var filtered = (raw || []).filter(function(v) {
@@ -572,7 +607,7 @@
         /* View badge */
         var views = document.createElement("div");
         views.className = "nq-views"; views.style.zIndex = "4";
-        views.innerHTML = "&#128065; " + (v.views || 0);
+        views.innerHTML = "&#128065; " + displayViews(v);
         card.appendChild(views);
 
         /* Number badge */
@@ -874,7 +909,11 @@
         }
       }, 8000); /* reduced from 12s to 8s */
     }
-    fetch(apiURL)
+    /* Cache-buster: /api/videos carries the live `views` count but is cached
+       (browser 5min, Vercel edge 5min + stale-while-revalidate 1h). Without a
+       unique URL the "refresh" just re-reads the stale copy and the view
+       counter never moves. */
+    fetch(apiURL + "&_t=" + Date.now(), { cache: "no-store" })
       .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function(data) {
         isFetching = false;
@@ -937,11 +976,7 @@
   });
 
   function refreshViewCounters() {
-    var cont = document.getElementById("nq-carousel-" + blockId);
-    if (!cont) return;
-    cont.querySelectorAll(".nq-card,.nq-side-card").forEach(function(card, i) {
-      if (allVideos[i]) { var el = card.querySelector(".nq-views"); if (el) el.innerHTML = "&#128065; " + (allVideos[i].views || 0); }
-    });
+    paintViews();
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -991,7 +1026,7 @@
 
     var views = document.createElement("div");
     views.className = "nq-views";
-    views.innerHTML = "&#128065; " + (video.views || 0);
+    views.innerHTML = "&#128065; " + displayViews(video);
     card.appendChild(videoEl);
     card.appendChild(views);
 
@@ -1450,13 +1485,13 @@
   function trackView(video) {
     trackEvent("view", video);
     video.views = (video.views || 0) + 1;
-    bustCache();
-    var cont = document.getElementById("nq-carousel-" + blockId);
-    if (cont) {
-      var idx = allVideos.indexOf(video);
-      var card = cont.querySelectorAll(".nq-card,.nq-side-card")[idx];
-      if (card) { var el = card.querySelector(".nq-views"); if (el) el.innerHTML = "&#128065; " + video.views; }
+    /* Lock in the new number so a stale /api/videos response can't undo it */
+    if (video.id) {
+      var prev = viewFloor[video.id] || 0;
+      if (video.views > prev) { viewFloor[video.id] = video.views; saveViewFloor(); }
     }
+    bustCache();
+    paintViews();
   }
 
   var _watchInterval = null, _watchStartTime = null, _watchLastTick = null, _watchVideo = null;
